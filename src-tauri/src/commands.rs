@@ -1,0 +1,192 @@
+use serde::Serialize;
+use sysinfo::{Components, Disks, Networks, System};
+
+#[derive(Serialize)]
+pub struct SystemStats {
+    pub cpu_percent:  f32,
+    pub ram_percent:  f32,
+    pub ram_used_gb:  f64,
+    pub ram_total_gb: f64,
+    pub disk_percent: f64,
+    pub disk_free_gb: f64,
+    pub uptime_secs:  u64,
+    pub cpu_temp:     Option<f32>,
+    pub gpu_temp:     Option<f32>,
+    pub battery:      Option<BatteryInfo>,
+}
+
+#[derive(Serialize)]
+pub struct BatteryInfo {
+    pub percent:  f32,
+    pub charging: bool,
+}
+
+#[derive(Serialize)]
+pub struct NetworkStats {
+    pub download_bytes: u64,
+    pub upload_bytes:   u64,
+    pub total_recv_mb:  f64,
+    pub total_sent_mb:  f64,
+}
+
+#[derive(Serialize)]
+pub struct ProcessInfo {
+    pub name:        String,
+    pub cpu_percent: f32,
+    pub mem_percent: f32,
+    pub pid:         u32,
+}
+
+#[derive(Serialize)]
+pub struct SpotifyInfo {
+    pub playing: bool,
+    pub track:   String,
+    pub artist:  String,
+}
+
+#[tauri::command]
+pub fn get_system_stats() -> SystemStats {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    let cpu_percent  = sys.global_cpu_usage();
+    let ram_used     = sys.used_memory();
+    let ram_total    = sys.total_memory();
+    let ram_percent  = if ram_total > 0 { ram_used as f32 / ram_total as f32 * 100.0 } else { 0.0 };
+    let ram_used_gb  = ram_used  as f64 / 1_073_741_824.0;
+    let ram_total_gb = ram_total as f64 / 1_073_741_824.0;
+
+    let disks = Disks::new_with_refreshed_list();
+    let (disk_percent, disk_free_gb) = disks.iter().next().map(|d| {
+        let total = d.total_space() as f64;
+        let free  = d.available_space() as f64;
+        let pct   = if total > 0.0 { (total - free) / total * 100.0 } else { 0.0 };
+        (pct, free / 1_073_741_824.0)
+    }).unwrap_or((0.0, 0.0));
+
+    let uptime_secs = System::uptime();
+
+    let components = Components::new_with_refreshed_list();
+    let cpu_temp: Option<f32> = components.iter()
+        .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") })
+        .and_then(|c| c.temperature());
+
+    let gpu_temp: Option<f32> = components.iter()
+        .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
+        .and_then(|c| c.temperature());
+
+    SystemStats {
+        cpu_percent, ram_percent, ram_used_gb, ram_total_gb,
+        disk_percent, disk_free_gb, uptime_secs,
+        cpu_temp, gpu_temp, battery: None,
+    }
+}
+
+#[tauri::command]
+pub fn get_network_stats() -> NetworkStats {
+    let mut networks = Networks::new_with_refreshed_list();
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    networks.refresh(false);
+
+    let (mut dl, mut ul, mut tr, mut ts) = (0u64, 0u64, 0u64, 0u64);
+    for (_, d) in &networks {
+        dl += d.received();
+        ul += d.transmitted();
+        tr += d.total_received();
+        ts += d.total_transmitted();
+    }
+    NetworkStats {
+        download_bytes: dl, upload_bytes: ul,
+        total_recv_mb: tr as f64 / 1_048_576.0,
+        total_sent_mb: ts as f64 / 1_048_576.0,
+    }
+}
+
+#[tauri::command]
+pub fn get_processes() -> Vec<ProcessInfo> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    let ram_total = sys.total_memory() as f32;
+
+    let mut procs: Vec<ProcessInfo> = sys.processes().values().map(|p| ProcessInfo {
+        name:        p.name().to_string_lossy().into_owned(),
+        cpu_percent: p.cpu_usage(),
+        mem_percent: if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 },
+        pid:         p.pid().as_u32(),
+    }).collect();
+
+    procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap());
+    procs.truncate(5);
+    procs
+}
+
+#[tauri::command]
+pub async fn get_weather() -> String {
+    match reqwest::get("https://wttr.in/?format=%t+%C").await {
+        Ok(r) => r.text().await.unwrap_or_else(|_| "Offline".into()),
+        Err(_) => "Offline".into(),
+    }
+}
+
+#[tauri::command]
+pub fn get_spotify() -> SpotifyInfo {
+    #[cfg(target_os = "windows")]
+    if let Some(title) = find_spotify_title() {
+        if title.contains(" - ") {
+            let mut p = title.splitn(2, " - ");
+            let artist = p.next().unwrap_or("").trim().to_string();
+            let track  = p.next().unwrap_or("").trim().to_string();
+            return SpotifyInfo { playing: true, track, artist };
+        }
+        return SpotifyInfo { playing: true, track: title, artist: "Unknown".into() };
+    }
+    SpotifyInfo { playing: false, track: String::new(), artist: String::new() }
+}
+
+#[cfg(target_os = "windows")]
+fn find_spotify_title() -> Option<String> {
+    use std::ptr;
+    use winapi::shared::minwindef::{BOOL, LPARAM};
+    use winapi::shared::windef::HWND;
+    use winapi::um::winuser::{EnumWindows, GetWindowTextW, GetWindowThreadProcessId, IsWindowVisible};
+    use winapi::um::processthreadsapi::OpenProcess;
+    use winapi::um::psapi::GetModuleBaseNameW;
+    use winapi::um::winnt::PROCESS_QUERY_INFORMATION;
+
+    static mut RESULT: Option<String> = None;
+
+    unsafe extern "system" fn cb(hwnd: HWND, _: LPARAM) -> BOOL {
+        if IsWindowVisible(hwnd) == 0 { return 1; }
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(hwnd, &mut pid);
+        let h = OpenProcess(PROCESS_QUERY_INFORMATION | 0x0010, 0, pid);
+        if h.is_null() { return 1; }
+        let mut name = [0u16; 260];
+        GetModuleBaseNameW(h, ptr::null_mut(), name.as_mut_ptr(), 260);
+        let pname = String::from_utf16_lossy(&name).trim_matches('\0').to_lowercase();
+        if pname.contains("spotify") {
+            let mut title = [0u16; 512];
+            let len = GetWindowTextW(hwnd, title.as_mut_ptr(), 512);
+            if len > 0 {
+                let s = String::from_utf16_lossy(&title[..len as usize]).to_string();
+                let skip = ["", "Spotify", "Spotify Premium", "Spotify Free", "GDI+ Window"];
+                if !skip.contains(&s.as_str()) { RESULT = Some(s); }
+            }
+        }
+        1
+    }
+
+    unsafe { RESULT = None; EnumWindows(Some(cb), 0); RESULT.clone() }
+}
+
+#[tauri::command]
+pub fn system_action(action: String) -> Result<(), String> {
+    match action.as_str() {
+        "restart"  => { #[cfg(windows)] std::process::Command::new("shutdown").args(["/r","/t","1"]).spawn().ok(); }
+        "shutdown" => { #[cfg(windows)] std::process::Command::new("shutdown").args(["/s","/t","1"]).spawn().ok(); }
+        "sleep"    => { #[cfg(windows)] std::process::Command::new("rundll32.exe").args(["powrprof.dll,SetSuspendState","0,1,0"]).spawn().ok(); }
+        "taskmgr"  => { #[cfg(windows)] std::process::Command::new("taskmgr").spawn().ok(); }
+        _ => return Err(format!("Unknown: {action}")),
+    }
+    Ok(())
+}
