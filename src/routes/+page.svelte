@@ -188,6 +188,11 @@
       <div class="hdr-clock">{clockStr}</div>
       <div class="hdr-meta">⏱ {fmtUptime(uptimeSecs)}</div>
       <div class="hdr-meta">🌤 {weatherText}</div>
+      <div class="win-controls no-drag">
+        <button class="win-btn" title="Minimize" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); await getCurrentWindow().minimize(); } catch {} }}>−</button>
+        <button class="win-btn" title="Maximize" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); const w = getCurrentWindow(); if (await w.isMaximized()) await w.unmaximize(); else await w.maximize(); } catch {} }}>⤢</button>
+        <button class="win-btn win-close" title="Close" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); await getCurrentWindow().close(); } catch {} }}>✕</button>
+      </div>
     </div>
   </div>
 
@@ -580,8 +585,8 @@
   .btn-dark:hover { background: #333; }
 
   /* ── Overlay ── */
-  .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.25); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; }
-  .mbox { background: #fff; border-radius: 20px; padding: 22px; width: 340px; box-shadow: 0 24px 64px rgba(0,0,0,.15); }
+  .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.25); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-family: -apple-system, 'Segoe UI', sans-serif; }
+  .mbox { background: #fff; border-radius: 20px; padding: 22px; width: 340px; box-shadow: 0 24px 64px rgba(0,0,0,.15); font-family: -apple-system, 'Segoe UI', sans-serif; color: #1a1a1a; }
   .mbox-wide { width: 560px; }
   .mbox-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .mbox-title { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #aaa; }
@@ -646,4 +651,10 @@
   .sp-track-name { font-size: 11px; font-weight: 600; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sp-track-artist { font-size: 9px; color: #aaa; }
   .sp-track-time { font-size: 9px; color: #ccc; flex-shrink: 0; }
+
+  /* ── Window controls ── */
+  .win-controls { display: flex; gap: 5px; margin-top: 8px; justify-content: flex-end; }
+  .win-btn { width: 22px; height: 22px; border-radius: 50%; border: none; background: #f0f0f0; color: #888; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: .12s; padding: 0; line-height: 1; }
+  .win-btn:hover { background: #e0e0e0; color: #333; }
+  .win-close:hover { background: #fee2e2; color: #ef4444; }
 </style>

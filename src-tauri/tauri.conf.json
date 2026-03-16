@@ -15,19 +15,23 @@
         "title": "JARVIS",
         "width": 420,
         "height": 900,
-        "resizable": false,
+        "resizable": true,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
         "shadow": true,
-        "label": "main"
+        "label": "main",
+        "maximizable": true,
+        "minimizable": true
       }
     ],
     "trayIcon": {
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true
     },
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
