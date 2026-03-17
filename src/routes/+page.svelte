@@ -9,6 +9,7 @@
   let dlSpeed = 0, ulSpeed = 0, totalToday = 0;
   let weatherText = '...';
   let spotifyPlaying = false, spotifyTrack = 'Not Playing', spotifyArtist = '';
+  let recentTracks = []; // filled from Spotify window title history
   let processList = [];
   let errorMsg = '';
   let modal = null; // null | 'spotify' | 'settings' | 'stats' | 'actions'
@@ -99,6 +100,12 @@
     ];
     const sp = await inv('get_spotify');
     if (sp) {
+      if (sp.playing && sp.track && sp.track !== spotifyTrack) {
+        // new track started — push old one to history
+        if (spotifyTrack && spotifyTrack !== 'Not Playing') {
+          recentTracks = [{ n: spotifyTrack, a: spotifyArtist, t: new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) }, ...recentTracks].slice(0, 8);
+        }
+      }
       spotifyPlaying = sp.playing;
       spotifyTrack   = sp.playing ? sp.track  : 'Not Playing';
       spotifyArtist  = sp.playing ? sp.artist : '';
@@ -159,6 +166,36 @@
   }, 1000);
   onDestroy(() => clearInterval(clockId));
 
+  // ── Window controls ────────────────────────────────────────────────────────
+  async function winMinimize() {
+    try {
+      const { appWindow } = await import('@tauri-apps/api/window');
+      await appWindow.minimize();
+    } catch(e) {
+      console.warn('minimize failed', e);
+    }
+  }
+
+  async function winMaximize() {
+    try {
+      const { appWindow } = await import('@tauri-apps/api/window');
+      const maximized = await appWindow.isMaximized();
+      if (maximized) await appWindow.unmaximize();
+      else await appWindow.maximize();
+    } catch(e) {
+      console.warn('maximize failed', e);
+    }
+  }
+
+  async function winClose() {
+    try {
+      const { appWindow } = await import('@tauri-apps/api/window');
+      await appWindow.close();
+    } catch(e) {
+      console.warn('close failed', e);
+    }
+  }
+
   // ── Visualizer bars (spotify panel) ───────────────────────────────────────
   let vizBars = Array(26).fill(20);
   let vizId;
@@ -189,9 +226,9 @@
       <div class="hdr-meta">⏱ {fmtUptime(uptimeSecs)}</div>
       <div class="hdr-meta">🌤 {weatherText}</div>
       <div class="win-controls no-drag">
-        <button class="win-btn" title="Minimize" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); await getCurrentWindow().minimize(); } catch {} }}>−</button>
-        <button class="win-btn" title="Maximize" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); const w = getCurrentWindow(); if (await w.isMaximized()) await w.unmaximize(); else await w.maximize(); } catch {} }}>⤢</button>
-        <button class="win-btn win-close" title="Close" on:click={async () => { try { const {getCurrentWindow} = await import('@tauri-apps/api/window'); await getCurrentWindow().close(); } catch {} }}>✕</button>
+        <button class="win-btn" title="Minimize" on:click={winMinimize}>−</button>
+        <button class="win-btn" title="Maximize" on:click={winMaximize}>⤢</button>
+        <button class="win-btn win-close" title="Close" on:click={winClose}>✕</button>
       </div>
     </div>
   </div>
@@ -354,20 +391,26 @@
           <button class="mclose" on:click={() => modal = null}>✕</button>
         </div>
         <div class="sp-body">
+
           <!-- LEFT -->
           <div class="sp-left">
-            <!-- Now Playing card -->
+
+            <!-- Now Playing -->
             <div class="sp-np-card">
               <div class="sp-np-label">NOW PLAYING</div>
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
                 <div class="sp-cover">♫</div>
                 <div style="min-width:0">
                   <div class="sp-np-track">{spotifyTrack}</div>
-                  <div class="sp-np-artist">{spotifyArtist || '—'}</div>
+                  <div class="sp-np-artist">{spotifyArtist || (spotifyPlaying ? '—' : 'Spotify kapalı')}</div>
                 </div>
               </div>
-              <div class="sp-prog-track"><div class="sp-prog-fill"></div></div>
-              <div class="sp-times"><span>1:12</span><span>3:22</span></div>
+              {#if spotifyPlaying}
+                <div class="sp-prog-track"><div class="sp-prog-fill"></div></div>
+                <div class="sp-times"><span>—:——</span><span>—:——</span></div>
+              {:else}
+                <div style="font-size:10px;color:#ccc;margin-top:8px">Spotify açık değil veya çalmıyor</div>
+              {/if}
             </div>
 
             <!-- Visualizer -->
@@ -375,9 +418,12 @@
               <div class="sp-viz-label">VISUALIZER</div>
               <div class="sp-viz-bars">
                 {#each vizBars as h, i}
-                  <div class="sp-vbar" style="height:{h}px; opacity:{0.4 + (i/vizBars.length)*0.6}"></div>
+                  <div class="sp-vbar" style="height:{spotifyPlaying ? h : 4}px; opacity:{spotifyPlaying ? (0.4 + (i/vizBars.length)*0.6) : 0.2}"></div>
                 {/each}
               </div>
+              {#if !spotifyPlaying}
+                <div style="font-size:10px;color:#ccc;text-align:center;margin-top:4px">Çalmıyor</div>
+              {/if}
             </div>
 
             <!-- Service selector -->
@@ -404,23 +450,22 @@
           <div class="sp-right">
             <div class="sp-hist-label">RECENTLY PLAYED</div>
             <div class="sp-hist-list">
-              <div class="sp-track-item sp-track-active">
-                <div class="sp-track-num">♪</div>
-                <div class="sp-track-dot sp-track-dot-active">♫</div>
-                <div class="sp-track-info">
-                  <div class="sp-track-name" style="color:#1DB954">{spotifyTrack}</div>
-                  <div class="sp-track-artist">{spotifyArtist || '—'}</div>
+
+              <!-- Currently playing -->
+              {#if spotifyPlaying}
+                <div class="sp-track-item sp-track-active">
+                  <div class="sp-track-num">♪</div>
+                  <div class="sp-track-dot sp-track-dot-active">♫</div>
+                  <div class="sp-track-info">
+                    <div class="sp-track-name" style="color:#1DB954">{spotifyTrack}</div>
+                    <div class="sp-track-artist">{spotifyArtist}</div>
+                  </div>
+                  <div class="sp-track-time">now</div>
                 </div>
-                <div class="sp-track-time">now</div>
-              </div>
-              {#each [
-                {n:'Starboy',a:'The Weeknd',t:'3m'},
-                {n:'Save Your Tears',a:'The Weeknd',t:'7m'},
-                {n:'Levitating',a:'Dua Lipa',t:'11m'},
-                {n:'As It Was',a:'Harry Styles',t:'15m'},
-                {n:'Heat Waves',a:'Glass Animals',t:'19m'},
-                {n:'Stay',a:'The Kid LAROI',t:'23m'},
-              ] as tr, i}
+              {/if}
+
+              <!-- History from this session -->
+              {#each recentTracks as tr, i}
                 <div class="sp-track-item">
                   <div class="sp-track-num">{i+1}</div>
                   <div class="sp-track-dot">♫</div>
@@ -431,6 +476,15 @@
                   <div class="sp-track-time">{tr.t}</div>
                 </div>
               {/each}
+
+              {#if !spotifyPlaying && recentTracks.length === 0}
+                <div class="sp-empty">
+                  <div style="font-size:28px;margin-bottom:8px">🎵</div>
+                  <div>Spotify açık değil</div>
+                  <div style="font-size:10px;color:#ccc;margin-top:4px">Çalınca geçmiş burada görünür</div>
+                </div>
+              {/if}
+
             </div>
           </div>
         </div>
@@ -504,14 +558,12 @@
 <style>
   /* ── Shell ── */
   .shell {
-    width: 400px; min-height: 100vh;
+    width: 100%; min-width: 400px;
     background: #f5f5f7;
     padding: 16px;
     display: flex; flex-direction: column; gap: 8px;
     font-family: -apple-system, 'Segoe UI', sans-serif;
     color: #1a1a1a;
-    border-radius: 18px;
-    border: 1px solid rgba(0,0,0,.05);
   }
 
   /* ── Cards ── */
@@ -587,7 +639,7 @@
   /* ── Overlay ── */
   .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.25); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-family: -apple-system, 'Segoe UI', sans-serif; }
   .mbox { background: #fff; border-radius: 20px; padding: 22px; width: 340px; box-shadow: 0 24px 64px rgba(0,0,0,.15); font-family: -apple-system, 'Segoe UI', sans-serif; color: #1a1a1a; }
-  .mbox-wide { width: 560px; }
+  .mbox-wide { width: min(560px, 95vw); max-height: 90vh; overflow-y: auto; }
   .mbox-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .mbox-title { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #aaa; }
   .mclose { width: 26px; height: 26px; background: #f5f5f5; border: none; border-radius: 50%; font-size: 12px; color: #888; transition: .12s; }
@@ -616,8 +668,8 @@
   .action-btn:hover { background: #f0f0f0; }
 
   /* ── Spotify panel ── */
-  .sp-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .sp-left { display: flex; flex-direction: column; gap: 10px; }
+  .sp-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; }
+  .sp-left { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .sp-np-card { background: #f9f9f9; border-radius: 12px; padding: 13px; border: 1px solid rgba(0,0,0,.05); }
   .sp-np-label { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: #1DB954; margin-bottom: 8px; }
   .sp-cover { width: 38px; height: 38px; border-radius: 9px; background: linear-gradient(135deg,#1DB954,#158a3e); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
@@ -638,9 +690,9 @@
   .sp-svc-icon { width: 26px; height: 26px; border-radius: 6px; background: #f0fdf4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .sp-svc-name { font-size: 11px; font-weight: 600; color: #1a1a1a; flex: 1; }
   .sp-svc-status { font-size: 9px; font-weight: 700; }
-  .sp-right { display: flex; flex-direction: column; }
+  .sp-right { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
   .sp-hist-label { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: #aaa; margin-bottom: 10px; }
-  .sp-hist-list { display: flex; flex-direction: column; gap: 5px; }
+  .sp-hist-list { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: 420px; }
   .sp-track-item { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 9px; border: 1px solid rgba(0,0,0,.05); background: #fafafa; transition: .12s; }
   .sp-track-item:hover { background: #f3f3f3; }
   .sp-track-active { background: #f0fdf4; border-color: rgba(29,185,84,.2); }
@@ -651,6 +703,7 @@
   .sp-track-name { font-size: 11px; font-weight: 600; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sp-track-artist { font-size: 9px; color: #aaa; }
   .sp-track-time { font-size: 9px; color: #ccc; flex-shrink: 0; }
+  .sp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: #bbb; font-size: 12px; text-align: center; }
 
   /* ── Window controls ── */
   .win-controls { display: flex; gap: 5px; margin-top: 8px; justify-content: flex-end; }

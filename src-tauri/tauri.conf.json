@@ -22,7 +22,10 @@
         "shadow": true,
         "label": "main",
         "maximizable": true,
-        "minimizable": true
+        "minimizable": true,
+        "closable": true,
+        "minWidth": 380,
+        "minHeight": 600
       }
     ],
     "trayIcon": {
