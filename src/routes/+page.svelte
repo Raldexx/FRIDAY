@@ -13,6 +13,8 @@
   let processList = [];
   let errorMsg = '';
   let modal = null; // null | 'spotify' | 'settings' | 'stats' | 'actions'
+  let darkTheme = false;
+  let alwaysOnTop = true;
 
   // Chart overlay
   let chartKey = null, chartTitle = '', chartColor = '';
@@ -167,33 +169,31 @@
   onDestroy(() => clearInterval(clockId));
 
   // ── Window controls ────────────────────────────────────────────────────────
+  // ── Window controls (Tauri v2) ────────────────────────────────────────────
   async function winMinimize() {
     try {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.minimize();
-    } catch(e) {
-      console.warn('minimize failed', e);
-    }
+      const { Window } = await import('@tauri-apps/api/window');
+      const win = await Window.getCurrent();
+      await win.minimize();
+    } catch(e) { console.warn('minimize:', e); }
   }
 
   async function winMaximize() {
     try {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      const maximized = await appWindow.isMaximized();
-      if (maximized) await appWindow.unmaximize();
-      else await appWindow.maximize();
-    } catch(e) {
-      console.warn('maximize failed', e);
-    }
+      const { Window } = await import('@tauri-apps/api/window');
+      const win = await Window.getCurrent();
+      const max = await win.isMaximized();
+      if (max) await win.unmaximize();
+      else await win.maximize();
+    } catch(e) { console.warn('maximize:', e); }
   }
 
   async function winClose() {
     try {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.close();
-    } catch(e) {
-      console.warn('close failed', e);
-    }
+      const { Window } = await import('@tauri-apps/api/window');
+      const win = await Window.getCurrent();
+      await win.close();
+    } catch(e) { console.warn('close:', e); }
   }
 
   // ── Visualizer bars (spotify panel) ───────────────────────────────────────
@@ -210,7 +210,7 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="shell" on:mousedown={async (e) => {
+<div class="shell {darkTheme ? 'dark' : ''}" on:mousedown={async (e) => {
   if (e.target.closest('.no-drag, button, input, select')) return;
   try { const { getCurrentWindow } = await import('@tauri-apps/api/window'); await getCurrentWindow().startDragging(); } catch {}
 }}>
@@ -499,21 +499,32 @@
         </div>
         <div class="settings-row">
           <span class="settings-label">Theme</span>
-          <span class="settings-val">Light (default)</span>
+          <div class="toggle-wrap no-drag">
+            <button class="toggle-btn {!darkTheme ? 'toggle-active' : ''}" on:click={() => darkTheme = false}>Light</button>
+            <button class="toggle-btn {darkTheme ? 'toggle-active' : ''}" on:click={() => darkTheme = true}>Dark</button>
+          </div>
         </div>
         <div class="settings-row">
-          <span class="settings-label">Update interval</span>
-          <span class="settings-val">1000ms</span>
+          <span class="settings-label">Always on top</span>
+          <div class="toggle-wrap no-drag">
+            <button class="toggle-btn {alwaysOnTop ? 'toggle-active' : ''}" on:click={async () => {
+              alwaysOnTop = true;
+              try { const { Window } = await import('@tauri-apps/api/window'); const w = await Window.getCurrent(); await w.setAlwaysOnTop(true); } catch {}
+            }}>On</button>
+            <button class="toggle-btn {!alwaysOnTop ? 'toggle-active' : ''}" on:click={async () => {
+              alwaysOnTop = false;
+              try { const { Window } = await import('@tauri-apps/api/window'); const w = await Window.getCurrent(); await w.setAlwaysOnTop(false); } catch {}
+            }}>Off</button>
+          </div>
         </div>
         <div class="settings-row">
-          <span class="settings-label">CPU alert</span>
+          <span class="settings-label">CPU alert threshold</span>
           <span class="settings-val">90%</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">RAM alert</span>
+          <span class="settings-label">RAM alert threshold</span>
           <span class="settings-val">85%</span>
         </div>
-        <p style="font-size:11px;color:#aaa;margin-top:12px">Full settings coming in next update.</p>
         <button class="close-btn" on:click={() => modal = null}>Close</button>
       </div>
 
@@ -710,4 +721,57 @@
   .win-btn { width: 22px; height: 22px; border-radius: 50%; border: none; background: #f0f0f0; color: #888; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: .12s; padding: 0; line-height: 1; }
   .win-btn:hover { background: #e0e0e0; color: #333; }
   .win-close:hover { background: #fee2e2; color: #ef4444; }
+
+  /* ── Dark theme ── */
+  .shell.dark { background: #111113; color: #e8e8ea; }
+  .shell.dark .card { background: #1c1c1e; border-color: rgba(255,255,255,.08); }
+  .shell.dark .hdr  { background: #1c1c1e; border-color: rgba(255,255,255,.08); }
+  .shell.dark .hdr-title { color: #e8e8ea; }
+  .shell.dark .hdr-clock  { color: #e8e8ea; }
+  .shell.dark .procs-card { background: #1c1c1e; border-color: rgba(255,255,255,.08); }
+  .shell.dark .metric-num { color: #e8e8ea; }
+  .shell.dark .metric-num-sm { color: #e8e8ea; }
+  .shell.dark .proc-name  { color: #aaa; }
+  .shell.dark .proc-track { background: rgba(255,255,255,.08); }
+  .shell.dark .btn-action { background: #1c1c1e; border-color: rgba(255,255,255,.1); color: #aaa; }
+  .shell.dark .btn-action:hover { background: #2c2c2e; }
+  .shell.dark .btn-dark   { background: #e8e8ea; color: #111; }
+  .shell.dark .btn-dark:hover { background: #fff; }
+  .shell.dark .sp-track   { color: #e8e8ea; }
+  .shell.dark .win-btn    { background: rgba(255,255,255,.1); color: #888; }
+  .shell.dark .win-btn:hover { background: rgba(255,255,255,.2); color: #e8e8ea; }
+  .shell.dark .demo-badge { background: #2c2510; border-color: #854d0e; }
+  .shell.dark .disk-bar-wrap { background: rgba(255,255,255,.08); }
+  .shell.dark .sparkline .spark-bar { opacity: 0.8; }
+
+  /* ── Settings toggles ── */
+  .toggle-wrap { display: flex; gap: 4px; }
+  .toggle-btn  { padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,.1); background: #f5f5f5; font-size: 11px; font-weight: 600; color: #888; transition: .12s; }
+  .toggle-btn.toggle-active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .shell.dark .toggle-btn { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.1); color: #888; }
+  .shell.dark .toggle-btn.toggle-active { background: #e8e8ea; color: #111; border-color: #e8e8ea; }
+
+  .shell.dark ~ .overlay .mbox { background: #1c1c1e; color: #e8e8ea; border: 1px solid rgba(255,255,255,.1); }
+  .shell.dark ~ .overlay .mbox-title { color: #666; }
+  .shell.dark ~ .overlay .mclose { background: rgba(255,255,255,.1); color: #888; }
+  .shell.dark ~ .overlay .settings-row { border-color: rgba(255,255,255,.06); }
+  .shell.dark ~ .overlay .settings-label { color: #aaa; }
+  .shell.dark ~ .overlay .settings-val { color: #e8e8ea; }
+  .shell.dark ~ .overlay .close-btn { background: rgba(255,255,255,.08); color: #aaa; }
+  .shell.dark ~ .overlay .close-btn:hover { background: rgba(255,255,255,.14); }
+  .shell.dark ~ .overlay .stat-item { background: rgba(255,255,255,.06); }
+  .shell.dark ~ .overlay .stat-label { color: #666; }
+  .shell.dark ~ .overlay .stat-val { color: #e8e8ea; }
+  .shell.dark ~ .overlay .action-btn { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); color: #ccc; }
+  .shell.dark ~ .overlay .action-btn:hover { background: rgba(255,255,255,.12); }
+  .shell.dark ~ .overlay .sp-np-card,
+  .shell.dark ~ .overlay .sp-viz-card,
+  .shell.dark ~ .overlay .sp-svc-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+  .shell.dark ~ .overlay .sp-np-track { color: #e8e8ea; }
+  .shell.dark ~ .overlay .sp-track-item { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.06); }
+  .shell.dark ~ .overlay .sp-track-item:hover { background: rgba(255,255,255,.08); }
+  .shell.dark ~ .overlay .sp-track-name { color: #e8e8ea; }
+  .shell.dark ~ .overlay .sp-svc-item { background: rgba(255,255,255,.06); }
+  .shell.dark ~ .overlay .mbox { background: #1c1c1e; }
+  .shell.dark ~ .overlay .chart-axis span { color: #555; }
 </style>
