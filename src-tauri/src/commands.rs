@@ -1,5 +1,32 @@
 use serde::Serialize;
-use sysinfo::{Components, Disks, Networks, System};
+use sysinfo::{Components, Disks, Networks, System, ProcessesToUpdate};
+use std::sync::Mutex;
+
+// ── Persistent System instance ────────────────────────────────────────────────
+// sysinfo calculates CPU% as a delta between two refresh() calls.
+// Creating a new System every call = no delta = garbage CPU readings.
+// We keep one instance alive in a Mutex and only refresh it.
+
+struct SysState {
+    sys: System,
+}
+
+static SYS: Mutex<Option<SysState>> = Mutex::new(None);
+
+fn with_sys<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut System) -> R,
+{
+    let mut guard = SYS.lock().unwrap();
+    if guard.is_none() {
+        let mut sys = System::new_all();
+        sys.refresh_all();
+        *guard = Some(SysState { sys });
+    }
+    f(&mut guard.as_mut().unwrap().sys)
+}
+
+// ── Response Types ────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
 pub struct SystemStats {
@@ -44,42 +71,51 @@ pub struct SpotifyInfo {
     pub artist:  String,
 }
 
+// ── Commands ──────────────────────────────────────────────────────────────────
+
 #[tauri::command]
 pub fn get_system_stats() -> SystemStats {
-    let mut sys = System::new_all();
-    sys.refresh_all();
+    // First refresh — prime the CPU counter
+    with_sys(|sys| { sys.refresh_cpu_usage(); sys.refresh_memory(); });
 
-    let cpu_percent  = sys.global_cpu_usage();
-    let ram_used     = sys.used_memory();
-    let ram_total    = sys.total_memory();
-    let ram_percent  = if ram_total > 0 { ram_used as f32 / ram_total as f32 * 100.0 } else { 0.0 };
-    let ram_used_gb  = ram_used  as f64 / 1_073_741_824.0;
-    let ram_total_gb = ram_total as f64 / 1_073_741_824.0;
+    // Wait so the delta window is meaningful
+    std::thread::sleep(std::time::Duration::from_millis(200));
 
-    let disks = Disks::new_with_refreshed_list();
-    let (disk_percent, disk_free_gb) = disks.iter().next().map(|d| {
-        let total = d.total_space() as f64;
-        let free  = d.available_space() as f64;
-        let pct   = if total > 0.0 { (total - free) / total * 100.0 } else { 0.0 };
-        (pct, free / 1_073_741_824.0)
-    }).unwrap_or((0.0, 0.0));
+    // Second refresh — now CPU% is accurate
+    with_sys(|sys| {
+        sys.refresh_cpu_usage();
+        sys.refresh_memory();
 
-    let uptime_secs = System::uptime();
+        let cpu_percent  = sys.global_cpu_usage();
+        let ram_used     = sys.used_memory();
+        let ram_total    = sys.total_memory();
+        let ram_percent  = if ram_total > 0 { ram_used as f32 / ram_total as f32 * 100.0 } else { 0.0 };
+        let ram_used_gb  = ram_used  as f64 / 1_073_741_824.0;
+        let ram_total_gb = ram_total as f64 / 1_073_741_824.0;
 
-    let components = Components::new_with_refreshed_list();
-    let cpu_temp: Option<f32> = components.iter()
-        .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") })
-        .and_then(|c| c.temperature());
+        let disks = Disks::new_with_refreshed_list();
+        let (disk_percent, disk_free_gb) = disks.iter().next().map(|d| {
+            let total = d.total_space() as f64;
+            let free  = d.available_space() as f64;
+            (if total > 0.0 { (total - free) / total * 100.0 } else { 0.0 }, free / 1_073_741_824.0)
+        }).unwrap_or((0.0, 0.0));
 
-    let gpu_temp: Option<f32> = components.iter()
-        .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
-        .and_then(|c| c.temperature());
+        let uptime_secs = System::uptime();
 
-    SystemStats {
-        cpu_percent, ram_percent, ram_used_gb, ram_total_gb,
-        disk_percent, disk_free_gb, uptime_secs,
-        cpu_temp, gpu_temp, battery: None,
-    }
+        let components = Components::new_with_refreshed_list();
+        let cpu_temp: Option<f32> = components.iter()
+            .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") })
+            .and_then(|c| c.temperature());
+        let gpu_temp: Option<f32> = components.iter()
+            .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
+            .and_then(|c| c.temperature());
+
+        SystemStats {
+            cpu_percent, ram_percent, ram_used_gb, ram_total_gb,
+            disk_percent, disk_free_gb, uptime_secs,
+            cpu_temp, gpu_temp, battery: None,
+        }
+    })
 }
 
 #[tauri::command]
@@ -89,35 +125,25 @@ pub fn get_network_stats() -> NetworkStats {
     networks.refresh(false);
 
     let (mut dl, mut ul, mut tr, mut ts) = (0u64, 0u64, 0u64, 0u64);
-    for (_, d) in &networks {
-        dl += d.received();
-        ul += d.transmitted();
-        tr += d.total_received();
-        ts += d.total_transmitted();
-    }
-    NetworkStats {
-        download_bytes: dl, upload_bytes: ul,
-        total_recv_mb: tr as f64 / 1_048_576.0,
-        total_sent_mb: ts as f64 / 1_048_576.0,
-    }
+    for (_, d) in &networks { dl += d.received(); ul += d.transmitted(); tr += d.total_received(); ts += d.total_transmitted(); }
+    NetworkStats { download_bytes: dl, upload_bytes: ul, total_recv_mb: tr as f64 / 1_048_576.0, total_sent_mb: ts as f64 / 1_048_576.0 }
 }
 
 #[tauri::command]
 pub fn get_processes() -> Vec<ProcessInfo> {
-    let mut sys = System::new_all();
-    sys.refresh_all();
-    let ram_total = sys.total_memory() as f32;
-
-    let mut procs: Vec<ProcessInfo> = sys.processes().values().map(|p| ProcessInfo {
-        name:        p.name().to_string_lossy().into_owned(),
-        cpu_percent: p.cpu_usage(),
-        mem_percent: if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 },
-        pid:         p.pid().as_u32(),
-    }).collect();
-
-    procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap());
-    procs.truncate(5);
-    procs
+    with_sys(|sys| {
+        sys.refresh_processes(ProcessesToUpdate::All, true);
+        let ram_total = sys.total_memory() as f32;
+        let mut procs: Vec<ProcessInfo> = sys.processes().values().map(|p| ProcessInfo {
+            name:        p.name().to_string_lossy().into_owned(),
+            cpu_percent: p.cpu_usage(),
+            mem_percent: if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 },
+            pid:         p.pid().as_u32(),
+        }).collect();
+        procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap());
+        procs.truncate(5);
+        procs
+    })
 }
 
 #[tauri::command]
