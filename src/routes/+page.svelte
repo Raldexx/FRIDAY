@@ -569,7 +569,9 @@
 <style>
   /* ── Shell ── */
   .shell {
-    width: 100%; min-width: 400px;
+    width: 100%;
+    min-width: 360px;
+    min-height: unset;
     background: #f5f5f7;
     padding: 16px;
     display: flex; flex-direction: column; gap: 8px;
