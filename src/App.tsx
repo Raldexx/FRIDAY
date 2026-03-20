@@ -256,7 +256,7 @@ export default function App() {
         onClose={() => setModal(null)}
         chartKey={chartKey}
         sys={sys}
-        net={{ ...net, dlSpeed: net.dlSpeed, ulSpeed: net.ulSpeed }}
+        net={net}
         sysInfo={sysInfo}
         cpuHist={cpuHist} ramHist={ramHist} gpuHist={gpuHist} netHist={netHist}
       />
