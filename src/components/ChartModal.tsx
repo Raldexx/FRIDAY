@@ -7,7 +7,7 @@ interface ChartModalProps {
   onClose: () => void;
   chartKey: 'cpu' | 'ram' | 'gpu' | 'net' | 'disk' | null;
   sys:     SystemStats;
-  net:     NetworkStats & { dlSpeed: number; ulSpeed: number };
+  net:     { dlSpeed: number; ulSpeed: number; totalRecvMb: number; totalSentMb: number; download_bytes: number; upload_bytes: number };
   sysInfo: SystemInfo;
   cpuHist: number[];
   ramHist: number[];

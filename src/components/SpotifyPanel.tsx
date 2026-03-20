@@ -69,7 +69,8 @@ export function SpotifyPanel({ open, onClose, spotify }: SpotifyPanelProps) {
     try {
       const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
       const existing = WebviewWindow.getByLabel('stats');
-      if (existing) { (await existing).show(); (await existing).setFocus(); return; }
+      const existingWin = await existing;
+      if (existingWin) { await existingWin.show(); await existingWin.setFocus(); return; }
       const win = new WebviewWindow('stats', { url: '/stats', title: 'JARVIS — Spotify Stats', width: 700, height: 780, decorations: false, transparent: true, resizable: true });
       win.once('tauri://created', () => win.show());
     } catch(e) { console.warn(e); }

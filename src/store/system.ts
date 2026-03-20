@@ -220,9 +220,7 @@ export function useSystemData() {
     startPolling();
     // Apply alwaysOnTop on mount
     if (settings.alwaysOnTop) {
-      import('@tauri-apps/api/window').then(({ Window }) =>
-        Window.getCurrent().then(w => w.setAlwaysOnTop(true)).catch(() => {})
-      );
+      import('@tauri-apps/api/window').then(async ({ Window }) => { try { const w = await Window.getCurrent(); await w.setAlwaysOnTop(true); } catch {} });
     }
     return () => {
       if (fastId.current) clearInterval(fastId.current);
