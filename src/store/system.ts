@@ -94,7 +94,7 @@ function pushHistory(hist: number[], val: number): number[] {
 
 export function useSystemData() {
   const [sys,     setSys]     = useState<SystemStats>({ cpu_percent:0, ram_percent:0, ram_used_gb:0, ram_total_gb:0, disk_percent:0, disk_free_gb:0, uptime_secs:0, cpu_temp:null, gpu_temp:null, battery:null });
-  const [net,     setNet]     = useState({ dlSpeed:0, ulSpeed:0, totalRecvMb:0, totalSentMb:0 });
+  const [net,     setNet]     = useState({ dlSpeed:0, ulSpeed:0, totalRecvMb:0, totalSentMb:0, download_bytes:0, upload_bytes:0 });
   const [spotify, setSpotify] = useState<SpotifyInfo>({ playing:false, track:'', artist:'' });
   const [procs,   setProcs]   = useState<ProcessInfo[]>([]);
   const [weather, setWeather] = useState('...');
@@ -154,7 +154,7 @@ export function useSystemData() {
         const ul = Math.max(0, n.upload_bytes   - prevSent.current) / 1024;
         prevRecv.current = n.download_bytes;
         prevSent.current = n.upload_bytes;
-        setNet({ dlSpeed: dl, ulSpeed: ul, totalRecvMb: n.total_recv_mb, totalSentMb: n.total_sent_mb });
+        setNet({ dlSpeed: dl, ulSpeed: ul, totalRecvMb: n.total_recv_mb, totalSentMb: n.total_sent_mb, download_bytes: n.download_bytes, upload_bytes: n.upload_bytes });
         setNetHist(h => pushHistory(h, dl));
       }
     } else {
