@@ -1,29 +1,47 @@
 import { cn } from '@/lib/utils';
-import { forwardRef } from 'react';
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  hover?: boolean;
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
   clickable?: boolean;
+  hover?: boolean;
+  onClick?: () => void;
+  artistTheme?: 'madison' | 'simge' | null;
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, hover, clickable, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-3.5',
-        hover && 'transition-all duration-150',
-        clickable && 'cursor-pointer hover:-translate-y-px hover:shadow-md active:scale-[0.99]',
-        className
-      )}
-      {...props}
-    />
-  )
-);
-Card.displayName = 'Card';
+export function Card({ children, className, clickable, hover, onClick, artistTheme }: CardProps) {
+  const base = artistTheme === 'madison'
+    ? 'bg-[#2d1b4e]/80 border-purple-700/30 text-white'
+    : artistTheme === 'simge'
+    ? 'bg-[#1e3a5f]/80 border-blue-700/30 text-white'
+    : 'bg-white dark:bg-[#1c1c1e] border-black/[0.06] dark:border-white/[0.07]';
 
-export const SectionLabel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('text-[9px] font-bold tracking-[0.12em] uppercase text-black/30 dark:text-white/30 mb-3', className)}>
-    {children}
-  </div>
-);
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'rounded-2xl border p-3.5 transition-all duration-150',
+        base,
+        hover && !artistTheme && 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]',
+        hover && artistTheme && 'hover:opacity-90',
+        clickable && 'cursor-pointer',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+interface SectionLabelProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function SectionLabel({ children, className }: SectionLabelProps) {
+  return (
+    <div className={cn('text-[9px] font-bold tracking-[0.14em] text-black/30 dark:text-white/30 mb-2', className)}>
+      {children}
+    </div>
+  );
+}

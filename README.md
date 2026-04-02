@@ -1,6 +1,6 @@
 # ⚡ JARVIS v3 — System Monitor
 
-> A clean, modern desktop system monitor built with **Tauri 2 + Svelte + Rust**
+> A clean, modern desktop system monitor built with **Tauri 2 + React + TypeScript + Rust**
 
 ---
 
@@ -24,44 +24,76 @@
 - CPU & GPU temperature readings (hardware dependent)
 - Disk usage with free space indicator
 - System uptime
+- **Top Processes** — Top 4 processes by CPU usage, live updated
 
 ### 🌐 Network
 - Real-time download / upload speed
 - Sparkline graph per metric card
-- Total daily data usage
 
 ### 🎵 Music
 - Spotify integration — detects currently playing track via Windows window title
 - Live animated visualizer
 - Real session history — tracks accumulate as you listen
+- Lyrics panel (Premium — requires Spotify API token)
 - Apple Music support coming soon
 
-### 📋 Process Monitor
-- Top 4 processes by CPU usage, live updated
+### 🌍 Language Support
+- English 🇬🇧, Turkish 🇹🇷, Spanish 🇪🇸
+- Language preference is saved to local storage
+
+### 📝 Notes & Timer
+- Quick notes with add / edit / delete
+- Integrated timer: count-up mode or countdown mode
+- Countdown sends a Windows notification + alert when finished
+
+### 🕐 World Clock
+- Click the header clock to open the world clock panel
+- Search any city and see its local time live
+
+### 🖼 Image Tools
+- Built-in image editor: Grayscale, Invert, Sepia, Blur, Brightness, Contrast
+- Download processed image with one click
+
+### 👑 Premium
+- Premium section with Discord contact for access (`Raldexx`)
+- Future: Spotify lyrics, cloud sync, custom themes
+
+### 🎨 Artist Themes
+- **Madison Beer** — plays any Madison Beer song → purple night theme activates
+- **Simge / İcardi** — plays *Aşkın Olayım* → blue Icardi theme activates
+- Theme reverts automatically when song changes
 
 ### ⚙️ Settings
 - **Light / Dark theme** toggle
-- **Always on top** toggle — pin JARVIS above other windows or let it sit behind
-- CPU & RAM alert thresholds
+- **Language** — English, Turkish, Spanish (persisted)
+- **Always on top** toggle
+- **Start with Windows** toggle
+- **Performance mode** — eco / normal / turbo (lowercase labels)
+- Re-launch the feature tour at any time
+
+### 🗺 Feature Tour
+- On first launch, a step-by-step guided tour of all features
+- Can be re-triggered from Settings
 
 ### ⚡ Quick Actions
 - Restart / Shutdown / Sleep
-- Open Task Manager
+- *(Task Manager button removed — was non-functional)*
 
 ### 🪟 Window
-- Custom frameless window with minimize, maximize, close controls
+- Custom frameless window with soft rounded corners
+- Minimize, maximize, close controls
+- Smaller default size (400×780) to avoid taskbar overlap
 - Freely resizable
-- Drag anywhere on the panel to move
 
 ---
 
 ## 🖥️ Supported Platforms
 
-| Platform | Status |
-|----------|--------|
-| Windows 10/11 | ✅ Full support |
-| macOS | ⚠️ Limited (Spotify & some system features unavailable) |
-| Linux | ⚠️ Limited |
+| Platform     | Status                                              |
+|--------------|-----------------------------------------------------|
+| Windows 10/11| ✅ Full support                                      |
+| macOS        | ⚠️ Limited (Spotify & some system features unavailable) |
+| Linux        | ⚠️ Limited                                          |
 
 ---
 
@@ -95,7 +127,7 @@ npm run tauri dev
 
 ```bash
 npm run tauri build
-# Output: src-tauri/target/release/bundle/nsis/JARVIS_3.0.0_x64-setup.exe
+# Output: src-tauri/target/release/bundle/nsis/JARVIS_3.2.0_x64-setup.exe
 ```
 
 Or just push to `main` — GitHub Actions builds it automatically and publishes to Releases.
@@ -118,42 +150,24 @@ Jarvis-v3/
 │   ├── build.rs
 │   └── tauri.conf.json
 │
-├── src/                    ← Frontend (Svelte)
-│   ├── routes/
-│   │   ├── +layout.js      ← SSR disabled (required for Tauri)
-│   │   ├── +layout.svelte
-│   │   └── +page.svelte    ← Entire UI (single file, self-contained)
-│   └── app.html
+├── src/                    ← Frontend (React + TypeScript)
+│   ├── App.tsx             ← Main UI + all modals
+│   ├── store/
+│   │   └── system.ts       ← Data hook + i18n + settings
+│   ├── components/
+│   │   ├── MetricCard.tsx
+│   │   ├── ChartModal.tsx
+│   │   ├── SpotifyPanel.tsx
+│   │   └── ui/
+│   │       ├── Card.tsx
+│   │       └── Modal.tsx
+│   └── index.css
 │
 ├── .github/workflows/
 │   └── build.yml           ← Auto-build on push to main
 ├── package.json
-├── svelte.config.js
-└── vite.config.js
+└── vite.config.ts
 ```
-
----
-
-## 🔧 Rust ↔ Python Mapping
-
-| Original Python | Rust / Tauri v3 |
-|----------------|-----------------|
-| `psutil.cpu_percent()` | `sysinfo::System::global_cpu_usage()` |
-| `psutil.virtual_memory()` | `sysinfo::System::used_memory()` |
-| `psutil.disk_usage('/')` | `sysinfo::Disks` |
-| `psutil.net_io_counters()` | `sysinfo::Networks` |
-| `psutil.sensors_temperatures()` | `sysinfo::Components` |
-| `win32gui.EnumWindows()` | `winapi::EnumWindows` (unsafe Rust) |
-| `requests.get(wttr.in)` | `reqwest::get()` |
-| `pyttsx3.speak()` | Removed (Web Speech API available if needed) |
-| `QSystemTrayIcon` | `tauri::tray::TrayIconBuilder` |
-| `PyQt6` UI | Svelte + CSS |
-
----
-
-## 🎨 Themes
-
-Switch between **Light** and **Dark** from the Settings panel inside the app.
 
 ---
 
@@ -162,7 +176,7 @@ Switch between **Light** and **Dark** from the Settings panel inside the app.
 - **Spotify detection** works on Windows only, using window title enumeration
 - **GPU temperature** depends on hardware and driver support via `sysinfo`
 - **Session history** in the Music panel resets when JARVIS is closed
-- **Daily stats** are not persisted between sessions yet (coming in future update)
+- **Start with Windows** setting is saved but requires Tauri autostart plugin to be wired in `lib.rs` (planned)
 - Build may take 5–15 minutes on first run as Rust compiles all dependencies
 
 ---
@@ -177,6 +191,16 @@ Switch between **Light** and **Dark** from the Settings panel inside the app.
 - `tokio` — Async runtime
 
 ### Frontend
-- `svelte` v4 + `@sveltejs/kit` — UI framework
+- `react` v18 + TypeScript
 - `@tauri-apps/api` v2 — Frontend ↔ Rust bridge
+- `framer-motion` — Animations
+- `lucide-react` — Icons
+- `tailwindcss` v3
 - `vite` v5 — Build tool
+
+---
+
+## 👑 Premium
+
+Want Premium features (lyrics, cloud sync, themes)?
+Contact on Discord: **Raldexx**

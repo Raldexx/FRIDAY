@@ -26,3 +26,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 99px; }
 .dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); }
+
+/* Soft window corners */
+body { border-radius: 18px; overflow: hidden; }
+
+/* Spotify */
+.text-spotify { color: #1DB954; }
+.bg-spotify   { background-color: #1DB954; }
+
+/* Turbo pulse */
+@keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:.55} }
+.animate-pulse2 { animation: pulse2 1.4s ease-in-out infinite; }

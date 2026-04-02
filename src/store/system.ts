@@ -45,26 +45,250 @@ export interface SystemInfo {
 }
 
 export type PerfMode = 'eco' | 'normal' | 'turbo';
+export type Language = 'en' | 'tr' | 'es';
 
 export const PERF_CONFIG = {
-  eco:    { icon: '🌿', label: 'ECO',    interval: 5000, slowInterval: 30000, net: false, spotify: false, procs: false, weather: false },
-  normal: { icon: '⚡', label: 'NORMAL', interval: 1000, slowInterval: 2000,  net: true,  spotify: true,  procs: true,  weather: true  },
-  turbo:  { icon: '🚀', label: 'TURBO',  interval: 500,  slowInterval: 1000,  net: true,  spotify: true,  procs: true,  weather: true  },
+  eco:    { icon: '🌿', label: 'eco',    interval: 5000, slowInterval: 30000, net: false, spotify: false, procs: false, weather: false },
+  normal: { icon: '⚡', label: 'normal', interval: 1000, slowInterval: 2000,  net: true,  spotify: true,  procs: true,  weather: true  },
+  turbo:  { icon: '🚀', label: 'turbo',  interval: 500,  slowInterval: 1000,  net: true,  spotify: true,  procs: true,  weather: true  },
 } as const;
+
+// ── i18n ──────────────────────────────────────────────────────────────────────
+
+export const TRANSLATIONS = {
+  en: {
+    systemMonitor: 'SYSTEM MONITOR',
+    settings: 'Settings',
+    changelog: 'Changelog',
+    actions: 'Actions',
+    notes: 'NOTES',
+    notesAdd: 'Tap to add a note',
+    notesMore: (n: number) => `+${n} more`,
+    noteAddBtn: '+ Add note',
+    nowPlaying: 'NOW PLAYING',
+    notPlaying: 'Not Playing',
+    openSpotify: 'Open Spotify',
+    system: 'SYSTEM',
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    alwaysOnTop: 'Always on top',
+    on: 'On',
+    off: 'Off',
+    performance: 'Performance',
+    close: 'Close',
+    language: 'Language',
+    startWithWindows: 'Start with Windows',
+    quickNotes: 'QUICK NOTES',
+    notePlaceholder: 'Write a note... (Ctrl+Enter to save)',
+    update: '✓ Update',
+    add: '+ Add',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    noNotes: 'No notes yet',
+    quickActions: 'QUICK ACTIONS',
+    restart: '🔄 Restart System',
+    shutdown: '⚫ Shutdown',
+    sleep: '😴 Sleep Mode',
+    confirmRestart: 'Confirm restart?',
+    confirmShutdown: 'Confirm shutdown?',
+    music: 'MUSIC',
+    recentlyPlayed: 'RECENTLY PLAYED',
+    visualizer: 'VISUALIZER',
+    musicService: 'MUSIC SERVICE',
+    stats: '📊 Stats',
+    demoMode: 'DEMO MODE',
+    uptime: 'Uptime',
+    free: 'free',
+    perfEcoInfo: 'CPU & RAM only · 5s refresh · low load',
+    perfNormalInfo: 'All metrics · 1s refresh · balanced',
+    perfTurboInfo: 'All metrics · 500ms refresh · max accuracy',
+    topProcesses: 'TOP PROCESSES',
+    ecoNoSpotify: 'Spotify tracking paused in Eco mode',
+    premium: 'Premium',
+    premiumTitle: 'PREMIUM',
+    timer: 'Timer',
+    worldClock: 'World Clock',
+    searchCity: 'Search city...',
+    imageTools: 'Image Tools',
+    firstRunTitle: 'Welcome to JARVIS',
+    firstRunDesc: "Here's a quick tour of all features:",
+    tour: {
+      cpu: '📊 CPU / RAM / GPU — Click any card to see a 60-second history chart.',
+      network: '🌐 Network — Real-time download & upload speed with sparkline.',
+      disk: '💿 Disk — Shows usage % and free space.',
+      nowPlaying: '🎵 Now Playing — Click to open the Music panel with track history.',
+      system: '🖥 System — Your hardware info at a glance.',
+      notes: '📝 Notes — Click to open notes & timer panel.',
+      settings: '⚙️ Settings — Theme, language, performance mode and more.',
+      actions: '⚡ Actions — Quick system controls.',
+      clock: '🕐 Clock — Click the clock to check world times.',
+    },
+    gotIt: 'Got it!',
+  },
+  tr: {
+    systemMonitor: 'SİSTEM MONİTÖRÜ',
+    settings: 'Ayarlar',
+    changelog: 'Değişiklikler',
+    actions: 'Eylemler',
+    notes: 'NOTLAR',
+    notesAdd: 'Not eklemek için tıkla',
+    notesMore: (n: number) => `+${n} daha`,
+    noteAddBtn: '+ Not ekle',
+    nowPlaying: 'ŞU AN ÇALIYOR',
+    notPlaying: 'Çalmıyor',
+    openSpotify: "Spotify'ı aç",
+    system: 'SİSTEM',
+    theme: 'Tema',
+    light: 'Açık',
+    dark: 'Koyu',
+    alwaysOnTop: 'Her zaman üstte',
+    on: 'Açık',
+    off: 'Kapalı',
+    performance: 'Performans',
+    close: 'Kapat',
+    language: 'Dil',
+    startWithWindows: 'Windows ile başlat',
+    quickNotes: 'HIZLI NOTLAR',
+    notePlaceholder: 'Not yaz... (Ctrl+Enter ile kaydet)',
+    update: '✓ Güncelle',
+    add: '+ Ekle',
+    cancel: 'İptal',
+    edit: 'Düzenle',
+    delete: 'Sil',
+    noNotes: 'Henüz not yok',
+    quickActions: 'HIZLI EYLEMLER',
+    restart: '🔄 Sistemi Yeniden Başlat',
+    shutdown: '⚫ Kapat',
+    sleep: '😴 Uyku Modu',
+    confirmRestart: 'Yeniden başlatılsın mı?',
+    confirmShutdown: 'Kapatılsın mı?',
+    music: 'MÜZİK',
+    recentlyPlayed: 'SON ÇALINANLAR',
+    visualizer: 'GÖRSELLEŞTİRİCİ',
+    musicService: 'MÜZİK SERVİSİ',
+    stats: '📊 İstatistik',
+    demoMode: 'DEMO MODU',
+    uptime: 'Çalışma süresi',
+    free: 'boş',
+    perfEcoInfo: 'Yalnızca CPU & RAM · 5s yenileme · düşük yük',
+    perfNormalInfo: 'Tüm metrikler · 1s yenileme · dengeli',
+    perfTurboInfo: 'Tüm metrikler · 500ms yenileme · maksimum hassasiyet',
+    topProcesses: 'EN YOĞUN İŞLEMLER',
+    ecoNoSpotify: 'Eco modda Spotify takibi duraklatıldı',
+    premium: 'Premium',
+    premiumTitle: 'PREMİUM',
+    timer: 'Zamanlayıcı',
+    worldClock: 'Dünya Saati',
+    searchCity: 'Şehir ara...',
+    imageTools: 'Resim Araçları',
+    firstRunTitle: "JARVIS'e Hoş Geldin",
+    firstRunDesc: 'Tüm özelliklere hızlı bir bakış:',
+    tour: {
+      cpu: '📊 CPU / RAM / GPU — 60 saniyelik geçmiş grafiği için herhangi bir karta tıkla.',
+      network: '🌐 Ağ — Anlık indirme ve yükleme hızı sparkline ile.',
+      disk: '💿 Disk — Kullanım yüzdesi ve boş alan.',
+      nowPlaying: '🎵 Şu An Çalıyor — Müzik panelini açmak için tıkla.',
+      system: '🖥 Sistem — Donanım bilgilerini tek bakışta gör.',
+      notes: '📝 Notlar — Not ve zamanlayıcı panelini açmak için tıkla.',
+      settings: '⚙️ Ayarlar — Tema, dil, performans modu ve daha fazlası.',
+      actions: '⚡ Eylemler — Hızlı sistem kontrolleri.',
+      clock: '🕐 Saat — Dünya saatlerini kontrol etmek için saate tıkla.',
+    },
+    gotIt: 'Anladım!',
+  },
+  es: {
+    systemMonitor: 'MONITOR DE SISTEMA',
+    settings: 'Ajustes',
+    changelog: 'Cambios',
+    actions: 'Acciones',
+    notes: 'NOTAS',
+    notesAdd: 'Toca para añadir una nota',
+    notesMore: (n: number) => `+${n} más`,
+    noteAddBtn: '+ Añadir nota',
+    nowPlaying: 'REPRODUCIENDO',
+    notPlaying: 'No hay música',
+    openSpotify: 'Abrir Spotify',
+    system: 'SISTEMA',
+    theme: 'Tema',
+    light: 'Claro',
+    dark: 'Oscuro',
+    alwaysOnTop: 'Siempre encima',
+    on: 'Sí',
+    off: 'No',
+    performance: 'Rendimiento',
+    close: 'Cerrar',
+    language: 'Idioma',
+    startWithWindows: 'Iniciar con Windows',
+    quickNotes: 'NOTAS RÁPIDAS',
+    notePlaceholder: 'Escribe una nota... (Ctrl+Enter para guardar)',
+    update: '✓ Actualizar',
+    add: '+ Añadir',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    delete: 'Eliminar',
+    noNotes: 'Sin notas aún',
+    quickActions: 'ACCIONES RÁPIDAS',
+    restart: '🔄 Reiniciar Sistema',
+    shutdown: '⚫ Apagar',
+    sleep: '😴 Modo Reposo',
+    confirmRestart: '¿Confirmar reinicio?',
+    confirmShutdown: '¿Confirmar apagado?',
+    music: 'MÚSICA',
+    recentlyPlayed: 'REPRODUCIDO RECIENTEMENTE',
+    visualizer: 'VISUALIZADOR',
+    musicService: 'SERVICIO DE MÚSICA',
+    stats: '📊 Estadísticas',
+    demoMode: 'MODO DEMO',
+    uptime: 'Tiempo activo',
+    free: 'libre',
+    perfEcoInfo: 'Solo CPU y RAM · 5s · carga baja',
+    perfNormalInfo: 'Todas las métricas · 1s · equilibrado',
+    perfTurboInfo: 'Todas las métricas · 500ms · máxima precisión',
+    topProcesses: 'PROCESOS PRINCIPALES',
+    ecoNoSpotify: 'Seguimiento de Spotify pausado en modo Eco',
+    premium: 'Premium',
+    premiumTitle: 'PREMIUM',
+    timer: 'Temporizador',
+    worldClock: 'Reloj Mundial',
+    searchCity: 'Buscar ciudad...',
+    imageTools: 'Herramientas de imagen',
+    firstRunTitle: 'Bienvenido a JARVIS',
+    firstRunDesc: 'Un recorrido rápido por todas las funciones:',
+    tour: {
+      cpu: '📊 CPU / RAM / GPU — Haz clic en cualquier tarjeta para ver el historial de 60 segundos.',
+      network: '🌐 Red — Velocidad de descarga y carga en tiempo real.',
+      disk: '💿 Disco — Porcentaje de uso y espacio libre.',
+      nowPlaying: '🎵 Reproduciendo — Haz clic para abrir el panel de música.',
+      system: '🖥 Sistema — Tu hardware de un vistazo.',
+      notes: '📝 Notas — Haz clic para abrir notas y temporizador.',
+      settings: '⚙️ Ajustes — Tema, idioma, modo de rendimiento y más.',
+      actions: '⚡ Acciones — Controles rápidos del sistema.',
+      clock: '🕐 Reloj — Haz clic para ver la hora en otras ciudades.',
+    },
+    gotIt: '¡Entendido!',
+  },
+} as const;
+
+export type T = typeof TRANSLATIONS['en'];
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
 const SETTINGS_KEY = 'jarvis_settings_v3';
 
 export interface Settings {
-  darkTheme:   boolean;
-  alwaysOnTop: boolean;
-  perfMode:    PerfMode;
+  darkTheme:        boolean;
+  alwaysOnTop:      boolean;
+  perfMode:         PerfMode;
+  language:         Language;
+  startWithWindows: boolean;
+  tourSeen:         boolean;
 }
 
 export function loadSettings(): Settings {
-  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
-  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal' }; }
+  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false }; }
 }
 
 export function saveSettings(s: Partial<Settings>) {
@@ -184,7 +408,6 @@ export function useSystemData() {
       if (sp) {
         setSpotify(prev => {
           if (sp.playing && sp.track && sp.track !== prev.track) {
-            // Save to spotify stats
             const STATS_KEY = 'jarvis_spotify_stats';
             try {
               const data = JSON.parse(localStorage.getItem(STATS_KEY) || '{"plays":[]}');
@@ -205,7 +428,6 @@ export function useSystemData() {
     }
   }, [settings.perfMode]);
 
-  // Start/restart polling when perfMode changes
   const startPolling = useCallback(() => {
     if (fastId.current) clearInterval(fastId.current);
     if (slowId.current) clearInterval(slowId.current);
@@ -218,7 +440,6 @@ export function useSystemData() {
 
   useEffect(() => {
     startPolling();
-    // Apply alwaysOnTop on mount
     if (settings.alwaysOnTop) {
       import('@tauri-apps/api/window').then(async ({ Window }) => { try { const w = await Window.getCurrent(); await w.setAlwaysOnTop(true); } catch {} });
     }
@@ -226,7 +447,7 @@ export function useSystemData() {
       if (fastId.current) clearInterval(fastId.current);
       if (slowId.current) clearInterval(slowId.current);
     };
-  }, [settings.perfMode]); // restart when perfMode changes
+  }, [settings.perfMode]);
 
   return { sys, net, spotify, procs, weather, sysInfo, isDemo, cpuHist, ramHist, gpuHist, netHist, settings, updateSettings };
 }
