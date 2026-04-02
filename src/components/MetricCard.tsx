@@ -56,7 +56,7 @@ export function MetricCard({ label, value, sub, color, history, onClick, childre
           return (
             <div
               key={i}
-              className="flex-1 rounded-[2px_2px_0_0] transition-all duration-300"
+              className="flex-1 rounded-none-[2px_2px_0_0] transition-all duration-300"
               style={{ height: h, background: barColor, opacity }}
             />
           );

@@ -97,7 +97,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
     <Modal open={open} onClose={onClose} title={t.worldClock}>
       <div className="mb-3">
         <input
-          className="w-full px-3 py-2 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors no-drag"
+          className="w-full px-3 py-2 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors no-drag"
           placeholder={t.searchCity}
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -105,7 +105,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
       </div>
       <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[360px]">
         {filtered.map(city => (
-          <div key={city.tz} className="flex items-center justify-between px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
+          <div key={city.tz} className="flex items-center justify-between px-3 py-2 rounded-none-none bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
             <div>
               <div className="text-[12px] font-semibold text-[#1a1a1a] dark:text-[#e8e8ea]">{city.name}</div>
               <div className="text-[9px] text-black/30 dark:text-white/30">{getCityDate(city.tz)}</div>
@@ -114,7 +114,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
           </div>
         ))}
       </div>
-      <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+      <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
     </Modal>
   );
 }
@@ -177,7 +177,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
     <Modal open={open} onClose={onClose} title="IMAGE TOOLS" wide>
       <div className="flex flex-col gap-3">
         {/* Upload */}
-        <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-black/[0.12] dark:border-white/[0.12] cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors no-drag">
+        <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-none-none border-2 border-dashed border-black/[0.12] dark:border-white/[0.12] cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors no-drag">
           <Image size={16} className="text-black/30 dark:text-white/30" />
           <span className="text-[12px] text-black/40 dark:text-white/40">{fileName || 'Click to upload image'}</span>
           <input type="file" accept="image/*" className="hidden" onChange={loadFile} />
@@ -186,7 +186,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
         {img && (
           <>
             {/* Preview */}
-            <div className="relative rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-center" style={{ minHeight: 160, maxHeight: 220 }}>
+            <div className="relative rounded-none-none overflow-hidden bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-center" style={{ minHeight: 160, maxHeight: 220 }}>
               <img src={img} alt="preview" style={{ maxHeight: 200, maxWidth: '100%', filter: getFilter(), borderRadius: 12, transition: 'filter 0.3s' }} />
             </div>
 
@@ -195,7 +195,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
               {ops.map(o => (
                 <button key={o.key}
                   onClick={() => setOp(prev => prev === o.key ? null : o.key)}
-                  className={cn('py-2 rounded-xl text-[11px] font-semibold transition-all border',
+                  className={cn('py-2 rounded-none-none text-[11px] font-semibold transition-all border',
                     op === o.key
                       ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent'
                       : 'bg-black/[0.03] dark:bg-white/[0.04] border-black/[0.06] dark:border-white/[0.06] text-black/50 dark:text-white/50 hover:bg-black/[0.06]'
@@ -219,14 +219,14 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
               </div>
             )}
 
-            <button onClick={download} className="w-full py-2.5 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-80 transition-opacity">
+            <button onClick={download} className="w-full py-2.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-80 transition-opacity">
               ⬇ Download
             </button>
           </>
         )}
       </div>
       <canvas ref={canvasRef} className="hidden" />
-      <button onClick={onClose} className="mt-3 w-full py-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">Close</button>
+      <button onClick={onClose} className="mt-3 w-full py-2 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">Close</button>
     </Modal>
   );
 }
@@ -236,7 +236,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
   return (
     <Modal open={open} onClose={onClose} title={t.premiumTitle}>
       <div className="flex flex-col items-center gap-4 py-2">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">
+        <div className="w-16 h-16 rounded-none-none bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">
           👑
         </div>
         <div className="text-center">
@@ -245,7 +245,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
             Unlock advanced features: Spotify lyrics, custom themes, cloud sync and more.
           </div>
         </div>
-        <div className="w-full rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-4">
+        <div className="w-full rounded-none-none border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-4">
           <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 mb-2">Want Premium access?</div>
           <div className="text-[11px] text-amber-600 dark:text-amber-500">
             Contact on Discord:<br />
@@ -254,7 +254,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
         </div>
         <div className="text-[10px] text-black/20 dark:text-white/20 text-center">Premium is manually granted.<br/>Reach out with your username to get access.</div>
       </div>
-      <button onClick={onClose} className="mt-2 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+      <button onClick={onClose} className="mt-2 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
     </Modal>
   );
 }
@@ -272,25 +272,25 @@ function TourModal({ open, onClose, t }: { open: boolean; onClose: () => void; t
         {/* Step indicator */}
         <div className="flex gap-1 justify-center">
           {steps.map((_, i) => (
-            <div key={i} onClick={() => setStep(i)} className={cn('h-1.5 rounded-full cursor-pointer transition-all', i === step ? 'w-5 bg-blue-500' : 'w-1.5 bg-black/10 dark:bg-white/10')} />
+            <div key={i} onClick={() => setStep(i)} className={cn('h-1.5 rounded-none-none cursor-pointer transition-all', i === step ? 'w-5 bg-blue-500' : 'w-1.5 bg-black/10 dark:bg-white/10')} />
           ))}
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={step}
             initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
-            className="bg-black/[0.03] dark:bg-white/[0.04] rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.06] min-h-[64px] flex items-center"
+            className="bg-black/[0.03] dark:bg-white/[0.04] rounded-none-none p-4 border border-black/[0.05] dark:border-white/[0.06] min-h-[64px] flex items-center"
           >
             <span className="text-[13px] text-[#1a1a1a] dark:text-[#e8e8ea]">{steps[step]}</span>
           </motion.div>
         </AnimatePresence>
         <div className="flex gap-2">
           {step > 0 && (
-            <button onClick={() => setStep(s => s - 1)} className="flex-1 py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">←</button>
+            <button onClick={() => setStep(s => s - 1)} className="flex-1 py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">←</button>
           )}
           <button
             onClick={() => isLast ? onClose() : setStep(s => s + 1)}
-            className="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-90 transition-opacity"
+            className="flex-1 py-2.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-90 transition-opacity"
           >
             {isLast ? t.gotIt : '→'}
           </button>
@@ -367,7 +367,7 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2 no-drag">
             <textarea
-              className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] resize-none focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors"
+              className="w-full px-3 py-2.5 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] resize-none focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors"
               placeholder={t.notePlaceholder}
               rows={3}
               value={noteInput}
@@ -375,9 +375,9 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
               onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) { if (editId !== null) { updateNote(editId, noteInput); setEditId(null); } else { addNote(noteInput); } setNoteInput(''); } }}
             />
             <div className="flex gap-2 justify-end">
-              {editId !== null && <button onClick={() => { setEditId(null); setNoteInput(''); }} className="px-3 py-1.5 rounded-lg bg-black/[0.05] text-[11px] font-semibold text-black/40">{t.cancel}</button>}
+              {editId !== null && <button onClick={() => { setEditId(null); setNoteInput(''); }} className="px-3 py-1.5 rounded-none-none bg-black/[0.05] text-[11px] font-semibold text-black/40">{t.cancel}</button>}
               <button onClick={() => { if (!noteInput.trim()) return; if (editId !== null) { updateNote(editId, noteInput); setEditId(null); } else { addNote(noteInput); } setNoteInput(''); }}
-                className="px-4 py-1.5 rounded-lg bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[11px] font-bold">
+                className="px-4 py-1.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[11px] font-bold">
                 {editId !== null ? t.update : t.add}
               </button>
             </div>
@@ -385,13 +385,13 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[220px]">
             {notes.length === 0 ? <div className="text-center py-6 text-[12px] text-black/20 dark:text-white/20">{t.noNotes}</div>
               : notes.map(n => (
-                <div key={n.id} className={cn('rounded-xl border p-2.5', editId === n.id ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20' : 'border-black/[0.05] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.03]')}>
+                <div key={n.id} className={cn('rounded-none-none border p-2.5', editId === n.id ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20' : 'border-black/[0.05] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.03]')}>
                   <div className="text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] whitespace-pre-wrap break-words mb-1.5">{n.text}</div>
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] text-black/20 dark:text-white/20">{fmtNoteTs(n.ts)}</span>
                     <div className="flex gap-1.5">
-                      <button onClick={() => { setEditId(n.id); setNoteInput(n.text); }} className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500">{t.edit}</button>
-                      <button onClick={() => removeNote(n.id)} className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-400">{t.delete}</button>
+                      <button onClick={() => { setEditId(n.id); setNoteInput(n.text); }} className="text-[10px] font-semibold px-2 py-0.5 rounded-none-none bg-blue-50 dark:bg-blue-900/20 text-blue-500">{t.edit}</button>
+                      <button onClick={() => removeNote(n.id)} className="text-[10px] font-semibold px-2 py-0.5 rounded-none-none bg-red-50 dark:bg-red-900/20 text-red-400">{t.delete}</button>
                     </div>
                   </div>
                 </div>
@@ -407,13 +407,13 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
           <div className="flex gap-1 no-drag">
             {(['up', 'down'] as const).map(m => (
               <button key={m} onClick={() => { setTimerMode(m); resetTimer(); }}
-                className={cn('flex-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all',
+                className={cn('flex-1 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                   timerMode === m ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40'
                 )}>{m === 'up' ? '▲ Count up' : '▼ Countdown'}</button>
             ))}
           </div>
           {/* Display */}
-          <div className="flex items-center justify-center py-5 bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl border border-black/[0.05] dark:border-white/[0.05]">
+          <div className="flex items-center justify-center py-5 bg-black/[0.03] dark:bg-white/[0.03] rounded-none-none border border-black/[0.05] dark:border-white/[0.05]">
             <span className="font-mono text-[36px] font-extrabold text-[#1a1a1a] dark:text-[#e8e8ea] tabular-nums">{fmtTime(timerSecs)}</span>
           </div>
           {/* Countdown input */}
@@ -422,17 +422,17 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
               <span className="text-[10px] text-black/40 dark:text-white/40">Set (sec)</span>
               <input type="number" min={1} max={86400} value={timerInput}
                 onChange={e => setTimerInput(Math.max(1, +e.target.value))}
-                className="flex-1 px-2 py-1 rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#1c1c1e] text-[12px] font-mono text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none"
+                className="flex-1 px-2 py-1 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#1c1c1e] text-[12px] font-mono text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none"
               />
             </div>
           )}
           {/* Controls */}
           <div className="flex gap-2 no-drag">
             {!timerRunning
-              ? <button onClick={startTimer} className="flex-1 py-2 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold">▶ Start</button>
-              : <button onClick={stopTimer}  className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-[12px] font-bold">⏸ Pause</button>
+              ? <button onClick={startTimer} className="flex-1 py-2 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold">▶ Start</button>
+              : <button onClick={stopTimer}  className="flex-1 py-2 rounded-none-none bg-amber-500 text-white text-[12px] font-bold">⏸ Pause</button>
             }
-            <button onClick={resetTimer} className="flex-1 py-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40">↺ Reset</button>
+            <button onClick={resetTimer} className="flex-1 py-2 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40">↺ Reset</button>
           </div>
         </div>
       </div>
@@ -443,7 +443,7 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
 // ── Main App ───────────────────────────────────────────────────────────────────
 export default function App() {
   const { sys, net, spotify, procs, weather, sysInfo, isDemo, cpuHist, ramHist, gpuHist, netHist, settings, updateSettings } = useSystemData();
-  const t = TRANSLATIONS[settings.language] as typeof TRANSLATIONS['en'];
+  const t = TRANSLATIONS[settings.language];
   const clock = useClock(settings.language);
   const { notes, add: addNote, remove: removeNote, update: updateNote } = useNotes();
 
@@ -516,7 +516,7 @@ export default function App() {
                 exit={{ opacity: 0, x: -8, scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold',
+                  'flex items-center gap-1 px-2 py-0.5 rounded-none-none text-[9px] font-bold',
                   settings.perfMode === 'eco'    && 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
                   settings.perfMode === 'normal' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
                   settings.perfMode === 'turbo'  && 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 animate-pulse2',
@@ -541,13 +541,13 @@ export default function App() {
           <div className="text-[10px] text-black/30 dark:text-white/30">⏱ {fmtUptime(sys.uptime_secs)}</div>
           <div className="text-[10px] text-black/30 dark:text-white/30">🌤 {weather}</div>
           <div className="flex gap-1 no-drag mt-0.5">
-            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
+            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
               <Minus size={8} />
             </button>
-            <button onClick={() => getWin().then(w => w.isMaximized().then(m => m ? w.unmaximize() : w.maximize()))} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
+            <button onClick={() => getWin().then(w => w.isMaximized().then(m => m ? w.unmaximize() : w.maximize()))} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
               <Maximize2 size={8} />
             </button>
-            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
+            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
               <X size={8} />
             </button>
           </div>
@@ -555,19 +555,19 @@ export default function App() {
       </Card>
 
       {isDemo && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-[10px] font-bold text-amber-700 dark:text-amber-400 text-center">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-none-none px-3 py-2 text-[10px] font-bold text-amber-700 dark:text-amber-400 text-center">
           {t.demoMode}
         </div>
       )}
 
       {/* Artist theme banner */}
       {artistTheme === 'madison' && (
-        <div className="rounded-xl px-3 py-2 text-[10px] font-bold text-center text-purple-300 bg-purple-900/30 border border-purple-700/30">
+        <div className="rounded-none-none px-3 py-2 text-[10px] font-bold text-center text-purple-300 bg-purple-900/30 border border-purple-700/30">
           ✨ Madison Beer mode active
         </div>
       )}
       {artistTheme === 'simge' && (
-        <div className="rounded-xl px-3 py-2 text-[10px] font-bold text-center text-blue-300 bg-blue-900/30 border border-blue-700/30">
+        <div className="rounded-none-none px-3 py-2 text-[10px] font-bold text-center text-blue-300 bg-blue-900/30 border border-blue-700/30">
           ⚽ Aşkın Olayım — İcardi theme active
         </div>
       )}
@@ -595,8 +595,8 @@ export default function App() {
           onClick={() => openChart('disk')}
           artistTheme={artistTheme}
         >
-          <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden mt-1">
-            <div className="h-full bg-[#6b7280] rounded-full transition-all duration-500" style={{ width: `${sys.disk_percent}%` }} />
+          <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-none-none overflow-hidden mt-1">
+            <div className="h-full bg-[#6b7280] rounded-none-none transition-all duration-500" style={{ width: `${sys.disk_percent}%` }} />
           </div>
         </MetricCard>
 
@@ -609,7 +609,7 @@ export default function App() {
           <div className="absolute top-3 right-3 text-[10px] font-bold text-black/20 dark:text-white/20">↗</div>
           <div className="flex items-end gap-[2px] h-5 mt-auto">
             {Array(12).fill(0).map((_, i) => (
-              <div key={i} className={cn('flex-1 rounded-[2px_2px_0_0]', artistTheme ? 'bg-purple-400' : 'bg-spotify')}
+              <div key={i} className={cn('flex-1 rounded-none-[2px_2px_0_0]', artistTheme ? 'bg-purple-400' : 'bg-spotify')}
                 style={{ height: (spotify.playing && settings.perfMode !== 'eco') ? `${4 + Math.random() * 14}px` : '3px', opacity: 0.6, transition: 'height 0.3s' }}
               />
             ))}
@@ -648,8 +648,8 @@ export default function App() {
                 <div key={p.pid} className="flex items-center gap-2 border-b border-black/[0.04] dark:border-white/[0.04] pb-1.5 last:border-0 last:pb-0">
                   <div className="flex-1 min-w-0">
                     <div className={cn('text-[10px] font-semibold truncate', artistTheme ? 'text-white/80' : 'text-[#333] dark:text-[#ccc]')}>{p.name}</div>
-                    <div className="h-[2px] bg-black/[0.05] dark:bg-white/[0.08] rounded-full mt-0.5 overflow-hidden">
-                      <div className="h-full bg-blue-400 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, p.cpu_percent)}%` }} />
+                    <div className="h-[2px] bg-black/[0.05] dark:bg-white/[0.08] rounded-none-none mt-0.5 overflow-hidden">
+                      <div className="h-full bg-blue-400 rounded-none-none transition-all duration-300" style={{ width: `${Math.min(100, p.cpu_percent)}%` }} />
                     </div>
                   </div>
                   <span className="text-[9px] font-mono text-black/30 dark:text-white/30 flex-shrink-0">{p.cpu_percent.toFixed(1)}%</span>
@@ -664,14 +664,14 @@ export default function App() {
       <Card clickable hover onClick={() => setModal('notes')} artistTheme={artistTheme} className="relative flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <SectionLabel className="mb-0">{t.notes}</SectionLabel>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-black/30 dark:text-white/30">{notes.length}</span>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none-none bg-black/[0.05] dark:bg-white/[0.08] text-black/30 dark:text-white/30">{notes.length}</span>
         </div>
         {notes.length === 0
           ? <div className={cn('text-[11px] flex-1 flex items-center', artistTheme ? 'text-white/30' : 'text-black/20 dark:text-white/20')}>{t.notesAdd}</div>
           : <div className="flex flex-col gap-1 flex-1">
               {notes.slice(0,3).map(n => (
                 <div key={n.id} className="flex items-center gap-1.5">
-                  <div className="w-1 h-1 rounded-full bg-blue-400 flex-shrink-0" />
+                  <div className="w-1 h-1 rounded-none-none bg-blue-400 flex-shrink-0" />
                   <span className="text-[10px] text-[#555] dark:text-[#999] truncate">{n.text.length > 30 ? n.text.slice(0,30)+'…' : n.text}</span>
                 </div>
               ))}
@@ -694,7 +694,7 @@ export default function App() {
             key={label}
             onClick={action}
             className={cn(
-              'flex flex-col items-center gap-1 py-2.5 rounded-2xl text-[9px] font-bold tracking-[0.05em] transition-all duration-150 border',
+              'flex flex-col items-center gap-1 py-2.5 rounded-none-none text-[9px] font-bold tracking-[0.05em] transition-all duration-150 border',
               gold
                 ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-amber-300 hover:opacity-90'
                 : artistTheme
@@ -711,7 +711,7 @@ export default function App() {
       <button
         onClick={() => setModal('actions')}
         className={cn(
-          'w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
+          'w-full flex items-center justify-center gap-2 py-3 rounded-none-none text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
           artistTheme
             ? 'bg-white/10 text-white border-white/10 hover:bg-white/15'
             : 'bg-white dark:bg-[#1c1c1e] text-black/50 dark:text-white/50 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
@@ -734,7 +734,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['false','true'] as const).map((v, i) => (
                 <button key={v} onClick={() => updateSettings({ darkTheme: i === 1 })}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                     settings.darkTheme === (i === 1) ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{i === 0 ? t.light : t.dark}</button>
               ))}
@@ -746,7 +746,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['en','tr','es'] as Language[]).map(l => (
                 <button key={l} onClick={() => updateSettings({ language: l })}
-                  className={cn('px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                  className={cn('px-2.5 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                     settings.language === l ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{{ en: '🇬🇧 EN', tr: '🇹🇷 TR', es: '🇪🇸 ES' }[l]}</button>
               ))}
@@ -761,7 +761,7 @@ export default function App() {
                   updateSettings({ alwaysOnTop: v });
                   try { (await getWin()).setAlwaysOnTop(v); } catch {}
                 }}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                     settings.alwaysOnTop === v ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{v ? t.on : t.off}</button>
               ))}
@@ -773,7 +773,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {[true, false].map((v) => (
                 <button key={String(v)} onClick={() => updateSettings({ startWithWindows: v })}
-                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                     settings.startWithWindows === v ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{v ? t.on : t.off}</button>
               ))}
@@ -785,24 +785,24 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['eco','normal','turbo'] as PerfMode[]).map(m => (
                 <button key={m} onClick={() => updateSettings({ perfMode: m })}
-                  className={cn('px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                  className={cn('px-2.5 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
                     settings.perfMode === m ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{PERF_CONFIG[m].icon} {PERF_CONFIG[m].label}</button>
               ))}
             </div>
           </div>
           {/* Perf info */}
-          <div className="pt-3 text-[10px] text-black/30 dark:text-white/30 bg-black/[0.02] dark:bg-white/[0.03] rounded-xl px-3 py-2.5">
+          <div className="pt-3 text-[10px] text-black/30 dark:text-white/30 bg-black/[0.02] dark:bg-white/[0.03] rounded-none-none px-3 py-2.5">
             {{ eco: t.perfEcoInfo, normal: t.perfNormalInfo, turbo: t.perfTurboInfo }[settings.perfMode]}
           </div>
           {/* Re-tour button */}
           <div className="pt-3">
-            <button onClick={() => { setModal(null); setShowTour(true); }} className="w-full py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[11px] font-semibold text-blue-500 hover:bg-blue-100 transition-colors">
+            <button onClick={() => { setModal(null); setShowTour(true); }} className="w-full py-2 rounded-none-none bg-blue-50 dark:bg-blue-900/20 text-[11px] font-semibold text-blue-500 hover:bg-blue-100 transition-colors">
               🗺 {settings.language === 'tr' ? 'Özellik turunu tekrar göster' : settings.language === 'es' ? 'Repetir tour de funciones' : 'Show feature tour again'}
             </button>
           </div>
         </div>
-        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
       </Modal>
 
       {/* Notes + Timer */}
@@ -822,12 +822,12 @@ export default function App() {
               const { invoke } = await import('@tauri-apps/api/core');
               invoke('system_action', { action: cmd }).catch(()=>{});
             }}
-              className="px-4 py-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06] text-[12px] font-semibold text-[#333] dark:text-[#ccc] text-left hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors">
+              className="px-4 py-3 rounded-none-none bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06] text-[12px] font-semibold text-[#333] dark:text-[#ccc] text-left hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors">
               {label}
             </button>
           ))}
         </div>
-        <button onClick={() => setModal(null)} className="mt-3 w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-[12px] font-semibold text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">✕ {t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-3 w-full py-2.5 rounded-none-none bg-red-50 dark:bg-red-900/20 text-[12px] font-semibold text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">✕ {t.close}</button>
       </Modal>
 
       {/* Changelog */}
@@ -868,7 +868,7 @@ export default function App() {
               <div className="flex flex-col gap-1">
                 {items.map((item, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <div className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0',
+                    <div className={cn('w-1.5 h-1.5 rounded-none-none mt-1.5 flex-shrink-0',
                       item.type === 'add' && 'bg-green-400',
                       item.type === 'fix' && 'bg-blue-400',
                       item.type === 'imp' && 'bg-amber-400',
@@ -881,7 +881,7 @@ export default function App() {
             </div>
           ))}
         </div>
-        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
       </Modal>
 
       {/* World Clock */}

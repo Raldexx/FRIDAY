@@ -93,7 +93,7 @@ export default function StatsApp() {
       }}
     >
       {/* Header */}
-      <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] px-4 py-3.5 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] px-4 py-3.5 flex items-center justify-between">
         <div>
           <div className="text-[9px] font-bold tracking-[0.18em] text-black/25 dark:text-white/25">SYSTEM MONITOR</div>
           <div className="text-[18px] font-extrabold text-[#1a1a1a] dark:text-[#e8e8ea]">
@@ -103,10 +103,10 @@ export default function StatsApp() {
         <div className="flex flex-col items-end gap-1.5">
           <div className="text-[13px] font-bold tabular-nums text-[#1a1a1a] dark:text-[#e8e8ea]">{clock}</div>
           <div className="flex gap-1 no-drag">
-            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 transition-colors">
+            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 transition-colors">
               <Minus size={8} />
             </button>
-            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
+            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
               <X size={8} />
             </button>
           </div>
@@ -114,10 +114,10 @@ export default function StatsApp() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1.5 bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-1.5 no-drag">
+      <div className="flex gap-1.5 bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-1.5 no-drag">
         {(['weekly','monthly','alltime'] as Filter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={cn('flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all',
+            className={cn('flex-1 py-2 rounded-none-none text-[11px] font-semibold transition-all',
               filter === f ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'text-black/30 dark:text-white/30 hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
             )}
           >
@@ -133,7 +133,7 @@ export default function StatsApp() {
           { val: uniqueTracks,  label: 'Tracks',  color: 'text-blue-500' },
           { val: uniqueArtists, label: 'Artists', color: 'text-purple-500' },
         ].map(({ val, label, color }) => (
-          <div key={label} className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-3.5 text-center">
+          <div key={label} className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-3.5 text-center">
             <div className={cn('text-[30px] font-extrabold tabular-nums', color)}>{val}</div>
             <div className="text-[9px] font-bold tracking-[0.12em] text-black/25 dark:text-white/25 mt-1">{label}</div>
           </div>
@@ -141,14 +141,14 @@ export default function StatsApp() {
       </div>
 
       {/* Daily chart */}
-      <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-3.5">
+      <div className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-3.5">
         <div className="text-[9px] font-bold tracking-[0.12em] text-black/25 dark:text-white/25 mb-3">DAILY ACTIVITY (LAST 7 DAYS)</div>
         <div className="flex items-end justify-between gap-2 h-24">
           {dailyChart.map((day, i) => (
             <div key={i} className="flex flex-col items-center gap-1 flex-1">
               <div className="w-full flex items-end justify-center" style={{ height: 80 }}>
                 <div
-                  className="w-full bg-spotify rounded-[4px_4px_0_0] opacity-75 transition-all duration-500"
+                  className="w-full bg-spotify rounded-none-[4px_4px_0_0] opacity-75 transition-all duration-500"
                   style={{ height: day.count > 0 ? Math.max(4, day.count / maxDaily * 80) : 0 }}
                 />
               </div>
@@ -162,7 +162,7 @@ export default function StatsApp() {
       {/* Top tracks + artists */}
       <div className="grid grid-cols-2 gap-2.5">
         {/* Top tracks */}
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-3.5">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-3.5">
           <div className="text-[9px] font-bold tracking-[0.12em] text-black/25 dark:text-white/25 mb-3">TOP TRACKS</div>
           {topTracks.length === 0
             ? <div className="text-[11px] text-black/20 dark:text-white/20 text-center py-6">No data yet.<br/>Play some music!</div>
@@ -174,8 +174,8 @@ export default function StatsApp() {
                   <div className="text-[9px] text-black/25 dark:text-white/25 truncate">{t.artist}</div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="w-8 h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${Math.round(t.count / topTracks[0].count * 100)}%` }} />
+                  <div className="w-8 h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-none-none overflow-hidden">
+                    <div className="h-full bg-blue-400 rounded-none-none" style={{ width: `${Math.round(t.count / topTracks[0].count * 100)}%` }} />
                   </div>
                   <span className="text-[10px] font-bold text-black/25 dark:text-white/25 w-5 text-right tabular-nums">{t.count}x</span>
                 </div>
@@ -185,7 +185,7 @@ export default function StatsApp() {
         </div>
 
         {/* Top artists */}
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-3.5">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-3.5">
           <div className="text-[9px] font-bold tracking-[0.12em] text-black/25 dark:text-white/25 mb-3">TOP ARTISTS</div>
           {topArtists.length === 0
             ? <div className="text-[11px] text-black/20 dark:text-white/20 text-center py-6">No data yet.</div>
@@ -197,8 +197,8 @@ export default function StatsApp() {
                   <div className="text-[9px] text-black/25 dark:text-white/25">{a.count} plays</div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="w-8 h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
-                    <div className="h-full bg-spotify rounded-full" style={{ width: `${Math.round(a.count / topArtists[0].count * 100)}%` }} />
+                  <div className="w-8 h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-none-none overflow-hidden">
+                    <div className="h-full bg-spotify rounded-none-none" style={{ width: `${Math.round(a.count / topArtists[0].count * 100)}%` }} />
                   </div>
                   <span className="text-[10px] font-bold text-black/25 dark:text-white/25 w-5 text-right tabular-nums">{a.count}x</span>
                 </div>
@@ -209,7 +209,7 @@ export default function StatsApp() {
       </div>
 
       {totalPlays === 0 && (
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-black/[0.07] dark:border-white/[0.08] p-10 text-center">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-none-none border border-black/[0.07] dark:border-white/[0.08] p-10 text-center">
           <div className="text-4xl mb-3">🎵</div>
           <div className="text-[15px] font-bold text-[#333] dark:text-[#ccc] mb-2">No listening data yet</div>
           <div className="text-[11px] text-black/30 dark:text-white/30 leading-relaxed">Play something on Spotify while JARVIS is running.<br/>Your stats will appear here automatically.</div>

@@ -20,7 +20,7 @@ export function Card({ children, className, clickable, hover, onClick, artistThe
     <div
       onClick={onClick}
       className={cn(
-        'rounded-2xl border p-3.5 transition-all duration-150',
+        'rounded-none-none border p-3.5 transition-all duration-150',
         base,
         hover && !artistTheme && 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]',
         hover && artistTheme && 'hover:opacity-90',

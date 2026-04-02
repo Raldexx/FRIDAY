@@ -30,7 +30,7 @@ export function Modal({ open, onClose, title, children, wide, className, actions
           {/* Box */}
           <motion.div
             className={cn(
-              'relative bg-white dark:bg-[#1c1c1e] rounded-3xl p-5 shadow-2xl z-10',
+              'relative bg-white dark:bg-[#1c1c1e] rounded-none-none p-5 shadow-2xl z-10',
               wide ? 'w-[560px]' : 'w-[340px]',
               'max-h-[85vh] flex flex-col',
               className
@@ -50,7 +50,7 @@ export function Modal({ open, onClose, title, children, wide, className, actions
               </div>
               <button
                 onClick={onClose}
-                className="w-6 h-6 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/15 transition-colors"
+                className="w-6 h-6 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/15 transition-colors"
               >
                 <X size={12} />
               </button>
