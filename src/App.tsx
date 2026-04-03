@@ -13,12 +13,170 @@ type ModalType = 'chart' | 'spotify' | 'settings' | 'stats' | 'actions' | 'chang
 type ChartKey = 'cpu' | 'ram' | 'gpu' | 'net' | 'disk';
 
 // ── Special artist themes ─────────────────────────────────────────────────────
-function getArtistTheme(artist: string, track: string): 'madison' | 'simge' | null {
+type ArtistTheme = 'madison' | 'icardi' | null;
+
+function getArtistTheme(artist: string, track: string): ArtistTheme {
   const a = artist.toLowerCase();
   const t = track.toLowerCase();
   if (a.includes('madison beer')) return 'madison';
-  if (a.includes('simge') || t.includes('aşkın olayım') || t.includes('icardi')) return 'simge';
+  if (a.includes('simge') || t.includes('aşkın olayım') || t.includes('icardi')) return 'icardi';
   return null;
+}
+
+const THEME_CFG = {
+  madison: {
+    bg:           'linear-gradient(160deg,#0d0018 0%,#1a0030 40%,#2d0a1a 100%)',
+    accent:       '#e879f9',
+    cardBg:       'rgba(45,10,60,0.82)',
+    cardBorder:   'rgba(232,121,249,0.20)',
+    textPrimary:  '#f5d0fe',
+    textMuted:    'rgba(245,208,254,0.45)',
+    sparkline:    '#e879f9',
+    nowPlayingColor: '#e879f9',
+    banner: '💜 Madison Beer mode',
+    bannerBg: 'rgba(168,85,247,0.15)',
+    bannerBorder: 'rgba(168,85,247,0.3)',
+    bannerText: '#d8b4fe',
+  },
+  icardi: {
+    bg:           'linear-gradient(160deg,#0a0000 0%,#1f0400 35%,#2e0c00 65%,#1a0900 100%)',
+    accent:       '#fbbf24',
+    cardBg:       'rgba(38,8,0,0.85)',
+    cardBorder:   'rgba(251,191,36,0.22)',
+    textPrimary:  '#fef3c7',
+    textMuted:    'rgba(254,243,199,0.45)',
+    sparkline:    '#f59e0b',
+    nowPlayingColor: '#fbbf24',
+    banner: '⚽ Galatasaray — İcardi #9',
+    bannerBg: 'rgba(220,38,38,0.18)',
+    bannerBorder: 'rgba(251,191,36,0.38)',
+    bannerText: '#fbbf24',
+  },
+} as const;
+
+// ── Artist CSS background art ─────────────────────────────────────────────────
+function ArtistBackground({ theme }: { theme: NonNullable<ArtistTheme> }) {
+  if (theme === 'madison') {
+    return (
+      <div style={{ position:'fixed', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0 }}>
+        {/* Purple glow */}
+        <div style={{ position:'absolute', right:'-60px', bottom:'60px', width:'300px', height:'420px',
+          background:'radial-gradient(ellipse at 70% 60%, rgba(232,121,249,0.22) 0%, transparent 68%)' }} />
+        <div style={{ position:'absolute', right:'-10px', top:'60px', width:'180px', height:'280px',
+          background:'radial-gradient(ellipse at 60% 40%, rgba(139,92,246,0.14) 0%, transparent 70%)' }} />
+        {/* Stars */}
+        {[...'★☆✦✧✩✪✫✬✭✮✯'].map((s,i) => (
+          <div key={i} style={{ position:'absolute', left:`${(i*73+7)%92}%`, top:`${(i*47+5)%88}%`,
+            fontSize:`${i%3===0?10:6}px`, color:`rgba(245,208,254,${0.12+i%4*0.05})`,
+            animation:`twinkle ${2+i%3}s ease-in-out infinite`, animationDelay:`${i*0.3}s` }}>{s}</div>
+        ))}
+        {/* Floating notes */}
+        {['♪','♫','♩','♬'].map((n,i) => (
+          <div key={i} style={{ position:'absolute', right:`${25+i*28}px`, top:`${100+i*60}px`,
+            fontSize:`${16+i*4}px`, color:'rgba(232,121,249,0.20)',
+            animation:`drift ${4+i}s ease-in-out infinite`, animationDelay:`${i*0.7}s` }}>{n}</div>
+        ))}
+        {/* Singer silhouette */}
+        <svg viewBox="0 0 110 290" style={{ position:'absolute', right:0, bottom:0, width:'110px', height:'290px', opacity:0.09 }}>
+          <ellipse cx="55" cy="30" rx="20" ry="23" fill="#e879f9"/>
+          {/* hair */}
+          <path d="M35 22 Q12 75 28 150 Q32 170 30 195" stroke="#e879f9" strokeWidth="9" fill="none" strokeLinecap="round"/>
+          <path d="M75 22 Q98 75 82 150 Q78 170 80 200" stroke="#e879f9" strokeWidth="7" fill="none" strokeLinecap="round"/>
+          {/* body */}
+          <path d="M38 53 Q26 95 28 145 Q30 175 25 218" stroke="#e879f9" strokeWidth="7" fill="none" strokeLinecap="round"/>
+          <path d="M72 53 Q84 95 82 145 Q80 175 85 218" stroke="#e879f9" strokeWidth="7" fill="none" strokeLinecap="round"/>
+          <path d="M28 145 Q55 158 82 145" stroke="#e879f9" strokeWidth="5" fill="none"/>
+          {/* legs */}
+          <line x1="38" y1="218" x2="30" y2="288" stroke="#e879f9" strokeWidth="6" strokeLinecap="round"/>
+          <line x1="72" y1="218" x2="80" y2="288" stroke="#e879f9" strokeWidth="6" strokeLinecap="round"/>
+          {/* mic */}
+          <path d="M80 90 Q102 78 108 66" stroke="#e879f9" strokeWidth="4" fill="none" strokeLinecap="round"/>
+          <ellipse cx="109" cy="62" rx="5" ry="9" fill="#e879f9" opacity="0.7"/>
+        </svg>
+        {/* MADISON BEER big watermark */}
+        <div style={{ position:'absolute', bottom:'8px', right:'8px',
+          fontSize:'8px', fontWeight:'900', letterSpacing:'0.15em',
+          color:'rgba(232,121,249,0.12)', textTransform:'uppercase' }}>MADISON BEER</div>
+      </div>
+    );
+  }
+
+  // Icardi / Galatasaray
+  return (
+    <div style={{ position:'fixed', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0 }}>
+      {/* Fire glow */}
+      <div style={{ position:'absolute', right:'-50px', bottom:'30px', width:'280px', height:'400px',
+        background:'radial-gradient(ellipse at 65% 75%, rgba(220,38,38,0.28) 0%, rgba(251,191,36,0.10) 50%, transparent 75%)' }} />
+      <div style={{ position:'absolute', left:'-30px', top:'100px', width:'160px', height:'220px',
+        background:'radial-gradient(ellipse at 35% 55%, rgba(251,191,36,0.12) 0%, transparent 70%)' }} />
+
+      {/* Galatasaray shield badge */}
+      <svg viewBox="0 0 100 110" style={{ position:'absolute', right:'10px', top:'10px', width:'52px', height:'58px', opacity:0.14 }}>
+        <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" fill="#dc2626"/>
+        <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" stroke="#fbbf24" strokeWidth="3.5" fill="none"/>
+        {/* Diagonal split */}
+        <line x1="8" y1="18" x2="92" y2="58" stroke="#fbbf24" strokeWidth="2" opacity="0.5"/>
+        <text x="50" y="70" textAnchor="middle" fontSize="36" fontWeight="900" fill="#fbbf24" fontFamily="serif">G</text>
+      </svg>
+
+      {/* Big number 9 watermark */}
+      <div style={{ position:'absolute', right:'-8px', bottom:'40px',
+        fontSize:'200px', fontWeight:'900', fontStyle:'italic',
+        color:'rgba(251,191,36,0.055)', lineHeight:1,
+        fontFamily:'Georgia,serif', userSelect:'none' }}>9</div>
+
+      {/* Football */}
+      <svg viewBox="0 0 60 60" style={{ position:'absolute', left:'10px', bottom:'100px', width:'44px', height:'44px', opacity:0.10 }}>
+        <circle cx="30" cy="30" r="27" stroke="#fbbf24" strokeWidth="2.5" fill="none"/>
+        <path d="M30 4 L22 16 L38 16 Z" fill="#dc2626"/>
+        <path d="M56 30 L44 22 L44 38 Z" fill="#dc2626"/>
+        <path d="M4 30 L16 22 L16 38 Z" fill="#dc2626"/>
+        <path d="M22 54 L30 44 L38 54 Z" fill="#dc2626"/>
+        <path d="M22 16 L16 24 L22 32 L30 34 L38 32 L44 24 L38 16 Z" fill="rgba(220,38,38,0.5)"/>
+      </svg>
+
+      {/* Fire sparks */}
+      {Array(10).fill(0).map((_,i) => (
+        <div key={i} style={{ position:'absolute',
+          right:`${12+(i*21)%75}px`, bottom:`${30+(i*41)%220}px`,
+          width:`${2+i%3}px`, height:`${2+i%3}px`, borderRadius:'50%',
+          background:i%2===0?'rgba(251,191,36,0.35)':'rgba(220,38,38,0.35)',
+          animation:`spark ${1.5+i*0.3}s ease-in-out infinite`, animationDelay:`${i*0.2}s` }} />
+      ))}
+
+      {/* Striker silhouette — arms raised celebration */}
+      <svg viewBox="0 0 105 270" style={{ position:'absolute', right:0, bottom:0, width:'105px', height:'270px', opacity:0.10 }}>
+        {/* Head */}
+        <ellipse cx="52" cy="26" rx="17" ry="19" fill="#fbbf24"/>
+        {/* Body/jersey */}
+        <path d="M35 45 L28 92 L30 148 L74 148 L76 92 L69 45 Z" fill="#dc2626"/>
+        {/* Arms UP celebrating */}
+        <path d="M35 58 Q12 40 6 22" stroke="#fbbf24" strokeWidth="8" fill="none" strokeLinecap="round"/>
+        <path d="M69 58 Q92 40 98 22" stroke="#fbbf24" strokeWidth="8" fill="none" strokeLinecap="round"/>
+        {/* Fists */}
+        <circle cx="5" cy="20" r="7" fill="#fbbf24"/>
+        <circle cx="99" cy="20" r="7" fill="#fbbf24"/>
+        {/* Shorts */}
+        <path d="M30 148 L24 196 L50 196 L52 165 L54 196 L80 196 L74 148 Z" fill="#fbbf24"/>
+        {/* Legs */}
+        <rect x="25" y="196" width="20" height="58" rx="5" fill="#dc2626"/>
+        <rect x="59" y="196" width="20" height="58" rx="5" fill="#dc2626"/>
+        {/* Boots */}
+        <ellipse cx="35" cy="256" rx="16" ry="9" fill="#0a0000"/>
+        <ellipse cx="69" cy="256" rx="16" ry="9" fill="#0a0000"/>
+        {/* Jersey number */}
+        <text x="52" y="118" textAnchor="middle" fontSize="26" fontWeight="900" fill="rgba(251,191,36,0.55)" fontFamily="Arial Narrow,sans-serif">9</text>
+        {/* Jersey stripes hint */}
+        <line x1="35" y1="48" x2="35" y2="148" stroke="rgba(251,191,36,0.15)" strokeWidth="2"/>
+        <line x1="69" y1="48" x2="69" y2="148" stroke="rgba(251,191,36,0.15)" strokeWidth="2"/>
+      </svg>
+
+      {/* GALATASARAY watermark */}
+      <div style={{ position:'absolute', bottom:'8px', left:'8px',
+        fontSize:'7px', fontWeight:'900', letterSpacing:'0.12em',
+        color:'rgba(251,191,36,0.10)', textTransform:'uppercase' }}>GALATASARAY</div>
+    </div>
+  );
 }
 
 // ── Window controls ────────────────────────────────────────────────────────────
@@ -97,7 +255,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
     <Modal open={open} onClose={onClose} title={t.worldClock}>
       <div className="mb-3">
         <input
-          className="w-full px-3 py-2 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors no-drag"
+          className="w-full px-3 py-2 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors no-drag"
           placeholder={t.searchCity}
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -105,7 +263,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
       </div>
       <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[360px]">
         {filtered.map(city => (
-          <div key={city.tz} className="flex items-center justify-between px-3 py-2 rounded-none-none bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
+          <div key={city.tz} className="flex items-center justify-between px-3 py-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
             <div>
               <div className="text-[12px] font-semibold text-[#1a1a1a] dark:text-[#e8e8ea]">{city.name}</div>
               <div className="text-[9px] text-black/30 dark:text-white/30">{getCityDate(city.tz)}</div>
@@ -114,7 +272,7 @@ function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => v
           </div>
         ))}
       </div>
-      <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+      <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
     </Modal>
   );
 }
@@ -177,7 +335,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
     <Modal open={open} onClose={onClose} title="IMAGE TOOLS" wide>
       <div className="flex flex-col gap-3">
         {/* Upload */}
-        <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-none-none border-2 border-dashed border-black/[0.12] dark:border-white/[0.12] cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors no-drag">
+        <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-black/[0.12] dark:border-white/[0.12] cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors no-drag">
           <Image size={16} className="text-black/30 dark:text-white/30" />
           <span className="text-[12px] text-black/40 dark:text-white/40">{fileName || 'Click to upload image'}</span>
           <input type="file" accept="image/*" className="hidden" onChange={loadFile} />
@@ -186,7 +344,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
         {img && (
           <>
             {/* Preview */}
-            <div className="relative rounded-none-none overflow-hidden bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-center" style={{ minHeight: 160, maxHeight: 220 }}>
+            <div className="relative rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-center" style={{ minHeight: 160, maxHeight: 220 }}>
               <img src={img} alt="preview" style={{ maxHeight: 200, maxWidth: '100%', filter: getFilter(), borderRadius: 12, transition: 'filter 0.3s' }} />
             </div>
 
@@ -195,7 +353,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
               {ops.map(o => (
                 <button key={o.key}
                   onClick={() => setOp(prev => prev === o.key ? null : o.key)}
-                  className={cn('py-2 rounded-none-none text-[11px] font-semibold transition-all border',
+                  className={cn('py-2 rounded-xl text-[11px] font-semibold transition-all border',
                     op === o.key
                       ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent'
                       : 'bg-black/[0.03] dark:bg-white/[0.04] border-black/[0.06] dark:border-white/[0.06] text-black/50 dark:text-white/50 hover:bg-black/[0.06]'
@@ -219,14 +377,14 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
               </div>
             )}
 
-            <button onClick={download} className="w-full py-2.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-80 transition-opacity">
+            <button onClick={download} className="w-full py-2.5 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-80 transition-opacity">
               ⬇ Download
             </button>
           </>
         )}
       </div>
       <canvas ref={canvasRef} className="hidden" />
-      <button onClick={onClose} className="mt-3 w-full py-2 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">Close</button>
+      <button onClick={onClose} className="mt-3 w-full py-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">Close</button>
     </Modal>
   );
 }
@@ -236,7 +394,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
   return (
     <Modal open={open} onClose={onClose} title={t.premiumTitle}>
       <div className="flex flex-col items-center gap-4 py-2">
-        <div className="w-16 h-16 rounded-none-none bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">
           👑
         </div>
         <div className="text-center">
@@ -245,7 +403,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
             Unlock advanced features: Spotify lyrics, custom themes, cloud sync and more.
           </div>
         </div>
-        <div className="w-full rounded-none-none border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-4">
+        <div className="w-full rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-4">
           <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 mb-2">Want Premium access?</div>
           <div className="text-[11px] text-amber-600 dark:text-amber-500">
             Contact on Discord:<br />
@@ -254,7 +412,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
         </div>
         <div className="text-[10px] text-black/20 dark:text-white/20 text-center">Premium is manually granted.<br/>Reach out with your username to get access.</div>
       </div>
-      <button onClick={onClose} className="mt-2 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+      <button onClick={onClose} className="mt-2 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
     </Modal>
   );
 }
@@ -272,25 +430,25 @@ function TourModal({ open, onClose, t }: { open: boolean; onClose: () => void; t
         {/* Step indicator */}
         <div className="flex gap-1 justify-center">
           {steps.map((_, i) => (
-            <div key={i} onClick={() => setStep(i)} className={cn('h-1.5 rounded-none-none cursor-pointer transition-all', i === step ? 'w-5 bg-blue-500' : 'w-1.5 bg-black/10 dark:bg-white/10')} />
+            <div key={i} onClick={() => setStep(i)} className={cn('h-1.5 rounded-full cursor-pointer transition-all', i === step ? 'w-5 bg-blue-500' : 'w-1.5 bg-black/10 dark:bg-white/10')} />
           ))}
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={step}
             initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
-            className="bg-black/[0.03] dark:bg-white/[0.04] rounded-none-none p-4 border border-black/[0.05] dark:border-white/[0.06] min-h-[64px] flex items-center"
+            className="bg-black/[0.03] dark:bg-white/[0.04] rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.06] min-h-[64px] flex items-center"
           >
             <span className="text-[13px] text-[#1a1a1a] dark:text-[#e8e8ea]">{steps[step]}</span>
           </motion.div>
         </AnimatePresence>
         <div className="flex gap-2">
           {step > 0 && (
-            <button onClick={() => setStep(s => s - 1)} className="flex-1 py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">←</button>
+            <button onClick={() => setStep(s => s - 1)} className="flex-1 py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">←</button>
           )}
           <button
             onClick={() => isLast ? onClose() : setStep(s => s + 1)}
-            className="flex-1 py-2.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-90 transition-opacity"
+            className="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold hover:opacity-90 transition-opacity"
           >
             {isLast ? t.gotIt : '→'}
           </button>
@@ -367,7 +525,7 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2 no-drag">
             <textarea
-              className="w-full px-3 py-2.5 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] resize-none focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors"
+              className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-black/[0.02] dark:bg-white/[0.04] text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] resize-none focus:outline-none focus:border-blue-300 dark:focus:border-blue-700 transition-colors"
               placeholder={t.notePlaceholder}
               rows={3}
               value={noteInput}
@@ -375,9 +533,9 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
               onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) { if (editId !== null) { updateNote(editId, noteInput); setEditId(null); } else { addNote(noteInput); } setNoteInput(''); } }}
             />
             <div className="flex gap-2 justify-end">
-              {editId !== null && <button onClick={() => { setEditId(null); setNoteInput(''); }} className="px-3 py-1.5 rounded-none-none bg-black/[0.05] text-[11px] font-semibold text-black/40">{t.cancel}</button>}
+              {editId !== null && <button onClick={() => { setEditId(null); setNoteInput(''); }} className="px-3 py-1.5 rounded-lg bg-black/[0.05] text-[11px] font-semibold text-black/40">{t.cancel}</button>}
               <button onClick={() => { if (!noteInput.trim()) return; if (editId !== null) { updateNote(editId, noteInput); setEditId(null); } else { addNote(noteInput); } setNoteInput(''); }}
-                className="px-4 py-1.5 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[11px] font-bold">
+                className="px-4 py-1.5 rounded-lg bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[11px] font-bold">
                 {editId !== null ? t.update : t.add}
               </button>
             </div>
@@ -385,13 +543,13 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[220px]">
             {notes.length === 0 ? <div className="text-center py-6 text-[12px] text-black/20 dark:text-white/20">{t.noNotes}</div>
               : notes.map(n => (
-                <div key={n.id} className={cn('rounded-none-none border p-2.5', editId === n.id ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20' : 'border-black/[0.05] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.03]')}>
+                <div key={n.id} className={cn('rounded-xl border p-2.5', editId === n.id ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20' : 'border-black/[0.05] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.03]')}>
                   <div className="text-[12px] text-[#1a1a1a] dark:text-[#e8e8ea] whitespace-pre-wrap break-words mb-1.5">{n.text}</div>
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] text-black/20 dark:text-white/20">{fmtNoteTs(n.ts)}</span>
                     <div className="flex gap-1.5">
-                      <button onClick={() => { setEditId(n.id); setNoteInput(n.text); }} className="text-[10px] font-semibold px-2 py-0.5 rounded-none-none bg-blue-50 dark:bg-blue-900/20 text-blue-500">{t.edit}</button>
-                      <button onClick={() => removeNote(n.id)} className="text-[10px] font-semibold px-2 py-0.5 rounded-none-none bg-red-50 dark:bg-red-900/20 text-red-400">{t.delete}</button>
+                      <button onClick={() => { setEditId(n.id); setNoteInput(n.text); }} className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500">{t.edit}</button>
+                      <button onClick={() => removeNote(n.id)} className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-400">{t.delete}</button>
                     </div>
                   </div>
                 </div>
@@ -407,13 +565,13 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
           <div className="flex gap-1 no-drag">
             {(['up', 'down'] as const).map(m => (
               <button key={m} onClick={() => { setTimerMode(m); resetTimer(); }}
-                className={cn('flex-1 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                className={cn('flex-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all',
                   timerMode === m ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40'
                 )}>{m === 'up' ? '▲ Count up' : '▼ Countdown'}</button>
             ))}
           </div>
           {/* Display */}
-          <div className="flex items-center justify-center py-5 bg-black/[0.03] dark:bg-white/[0.03] rounded-none-none border border-black/[0.05] dark:border-white/[0.05]">
+          <div className="flex items-center justify-center py-5 bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl border border-black/[0.05] dark:border-white/[0.05]">
             <span className="font-mono text-[36px] font-extrabold text-[#1a1a1a] dark:text-[#e8e8ea] tabular-nums">{fmtTime(timerSecs)}</span>
           </div>
           {/* Countdown input */}
@@ -422,17 +580,17 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
               <span className="text-[10px] text-black/40 dark:text-white/40">Set (sec)</span>
               <input type="number" min={1} max={86400} value={timerInput}
                 onChange={e => setTimerInput(Math.max(1, +e.target.value))}
-                className="flex-1 px-2 py-1 rounded-none-none border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#1c1c1e] text-[12px] font-mono text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none"
+                className="flex-1 px-2 py-1 rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#1c1c1e] text-[12px] font-mono text-[#1a1a1a] dark:text-[#e8e8ea] focus:outline-none"
               />
             </div>
           )}
           {/* Controls */}
           <div className="flex gap-2 no-drag">
             {!timerRunning
-              ? <button onClick={startTimer} className="flex-1 py-2 rounded-none-none bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold">▶ Start</button>
-              : <button onClick={stopTimer}  className="flex-1 py-2 rounded-none-none bg-amber-500 text-white text-[12px] font-bold">⏸ Pause</button>
+              ? <button onClick={startTimer} className="flex-1 py-2 rounded-xl bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] text-[12px] font-bold">▶ Start</button>
+              : <button onClick={stopTimer}  className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-[12px] font-bold">⏸ Pause</button>
             }
-            <button onClick={resetTimer} className="flex-1 py-2 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40">↺ Reset</button>
+            <button onClick={resetTimer} className="flex-1 py-2 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40">↺ Reset</button>
           </div>
         </div>
       </div>
@@ -452,7 +610,8 @@ export default function App() {
   const [showTour, setShowTour] = useState(false);
 
   // Artist theme
-  const artistTheme = spotify.playing ? getArtistTheme(spotify.artist, spotify.track) : null;
+  const artistTheme: ArtistTheme = spotify.playing ? getArtistTheme(spotify.artist, spotify.track) : null;
+  const tc = artistTheme ? THEME_CFG[artistTheme] : null;
 
   // Dark mode
   useEffect(() => {
@@ -476,36 +635,34 @@ export default function App() {
 
   const perfCfg = PERF_CONFIG[settings.perfMode];
 
-  // ── Artist theme CSS vars ──────────────────────────────────────────────────
-  const themeStyle: React.CSSProperties = artistTheme === 'madison'
-    ? { '--artist-bg': '#1a0a2e', '--artist-accent': '#c084fc', '--artist-card': '#2d1b4e' } as React.CSSProperties
-    : artistTheme === 'simge'
-    ? { '--artist-bg': '#0f1a2e', '--artist-accent': '#3b82f6', '--artist-card': '#1e3a5f' } as React.CSSProperties
+  // ── Artist theme ────────────────────────────────────────────────────────────
+  const appStyle: React.CSSProperties = tc
+    ? { background: tc.bg }
     : {};
-
-  const bgClass = artistTheme === 'madison'
-    ? 'bg-[#1a0a2e]'
-    : artistTheme === 'simge'
-    ? 'bg-[#0f1a2e]'
-    : 'bg-[#f5f5f7] dark:bg-[#111113]';
+  const bgClass = artistTheme ? '' : 'bg-[#f5f5f7] dark:bg-[#111113]';
 
   return (
     <div
-      className={cn('w-full min-h-screen p-4 flex flex-col gap-2.5 font-sans', bgClass)}
-      style={themeStyle}
+      className={cn('w-full min-h-screen p-4 flex flex-col gap-2.5 font-sans relative', bgClass)}
+      style={appStyle}
       onMouseDown={async (e) => {
         const t2 = e.target as HTMLElement;
         if (t2.closest('.no-drag, button, input, textarea, select')) return;
         try { (await getWin()).startDragging(); } catch {}
       }}
     >
+      {/* ── Artist background art ── */}
+      {artistTheme && <ArtistBackground theme={artistTheme} />}
+
+      {/* All content above background */}
+      <div className="relative" style={{ zIndex: 1 }}>
 
       {/* ═══ HEADER ═══ */}
-      <Card artistTheme={artistTheme} className="flex items-center justify-between px-4 py-3.5">
+      <Card tc={tc} className="flex items-center justify-between px-4 py-3.5">
         <div>
           <div className="text-[9px] font-bold tracking-[0.18em] text-black/25 dark:text-white/25">{t.systemMonitor}</div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className={cn('text-[20px] font-extrabold tracking-tight', artistTheme ? 'text-white' : 'text-[#1a1a1a] dark:text-[#e8e8ea]')}>
+            <span className={cn('text-[20px] font-extrabold tracking-tight', tc ? '' : 'text-[#1a1a1a] dark:text-[#e8e8ea]')}>
               JARVIS <span className="text-[13px] font-normal text-black/20 dark:text-white/20">v3.2</span>
             </span>
             <AnimatePresence mode="wait">
@@ -516,7 +673,7 @@ export default function App() {
                 exit={{ opacity: 0, x: -8, scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-0.5 rounded-none-none text-[9px] font-bold',
+                  'flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold',
                   settings.perfMode === 'eco'    && 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
                   settings.perfMode === 'normal' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
                   settings.perfMode === 'turbo'  && 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 animate-pulse2',
@@ -532,22 +689,22 @@ export default function App() {
           {/* Clickable clock → world clock */}
           <button
             className="text-[13px] font-bold font-mono tabular-nums no-drag hover:opacity-70 transition-opacity flex items-center gap-1"
-            style={{ color: artistTheme ? 'white' : undefined }}
+            style={{ color: tc ? tc.textPrimary : undefined }}
             onClick={() => setModal('worldclock')}
           >
             <Clock size={10} className="opacity-40" />
-            <span className={artistTheme ? 'text-white' : 'text-[#1a1a1a] dark:text-[#e8e8ea]'}>{clock}</span>
+            <span className={tc ? '' : 'text-[#1a1a1a] dark:text-[#e8e8ea]'}>{clock}</span>
           </button>
           <div className="text-[10px] text-black/30 dark:text-white/30">⏱ {fmtUptime(sys.uptime_secs)}</div>
           <div className="text-[10px] text-black/30 dark:text-white/30">🌤 {weather}</div>
           <div className="flex gap-1 no-drag mt-0.5">
-            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
+            <button onClick={() => getWin().then(w => w.minimize())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
               <Minus size={8} />
             </button>
-            <button onClick={() => getWin().then(w => w.isMaximized().then(m => m ? w.unmaximize() : w.maximize()))} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
+            <button onClick={() => getWin().then(w => w.isMaximized().then(m => m ? w.unmaximize() : w.maximize()))} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15 transition-colors">
               <Maximize2 size={8} />
             </button>
-            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-none-none bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
+            <button onClick={() => getWin().then(w => w.close())} className="w-5 h-5 rounded-full bg-black/05 dark:bg-white/08 flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
               <X size={8} />
             </button>
           </div>
@@ -555,33 +712,29 @@ export default function App() {
       </Card>
 
       {isDemo && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-none-none px-3 py-2 text-[10px] font-bold text-amber-700 dark:text-amber-400 text-center">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-[10px] font-bold text-amber-700 dark:text-amber-400 text-center">
           {t.demoMode}
         </div>
       )}
 
       {/* Artist theme banner */}
-      {artistTheme === 'madison' && (
-        <div className="rounded-none-none px-3 py-2 text-[10px] font-bold text-center text-purple-300 bg-purple-900/30 border border-purple-700/30">
-          ✨ Madison Beer mode active
-        </div>
-      )}
-      {artistTheme === 'simge' && (
-        <div className="rounded-none-none px-3 py-2 text-[10px] font-bold text-center text-blue-300 bg-blue-900/30 border border-blue-700/30">
-          ⚽ Aşkın Olayım — İcardi theme active
+      {tc && (
+        <div style={{ background:tc.bannerBg, borderColor:tc.bannerBorder, color:tc.bannerText }}
+          className="rounded-xl px-3 py-2 text-[10px] font-bold text-center border">
+          {tc.banner}
         </div>
       )}
 
       {/* ═══ CPU + RAM ═══ */}
       <div className="grid grid-cols-2 gap-2.5">
-        <MetricCard label="CPU" value={`${Math.round(sys.cpu_percent)}%`} sub={`${fmtTemp(sys.cpu_temp)} · load`} color="#3b82f6" history={cpuHist} onClick={() => openChart('cpu')} artistTheme={artistTheme} />
-        <MetricCard label="RAM" value={`${Math.round(sys.ram_percent)}%`} sub={`${sys.ram_used_gb.toFixed(1)} / ${sys.ram_total_gb.toFixed(1)} GB`} color="#8b5cf6" history={ramHist} onClick={() => openChart('ram')} artistTheme={artistTheme} />
+        <MetricCard label="CPU" value={`${Math.round(sys.cpu_percent)}%`} sub={`${fmtTemp(sys.cpu_temp)} · load`} color="#3b82f6" history={cpuHist} onClick={() => openChart('cpu')} tc={tc} />
+        <MetricCard label="RAM" value={`${Math.round(sys.ram_percent)}%`} sub={`${sys.ram_used_gb.toFixed(1)} / ${sys.ram_total_gb.toFixed(1)} GB`} color="#8b5cf6" history={ramHist} onClick={() => openChart('ram')} tc={tc} />
       </div>
 
       {/* ═══ GPU + NETWORK ═══ */}
       <div className="grid grid-cols-2 gap-2.5">
-        <MetricCard label="GPU" value={`${Math.round(0)}%`} sub={fmtTemp(sys.gpu_temp)} color="#f59e0b" history={gpuHist} onClick={() => openChart('gpu')} artistTheme={artistTheme} />
-        <MetricCard label="NETWORK" value={fmtSpeed(net.dlSpeed)} sub={`↑ ${fmtSpeed(net.ulSpeed)}`} color="#10b981" history={netHist} onClick={() => openChart('net')} artistTheme={artistTheme} />
+        <MetricCard label="GPU" value={`${Math.round(0)}%`} sub={fmtTemp(sys.gpu_temp)} color="#f59e0b" history={gpuHist} onClick={() => openChart('gpu')} tc={tc} />
+        <MetricCard label="NETWORK" value={fmtSpeed(net.dlSpeed)} sub={`↑ ${fmtSpeed(net.ulSpeed)}`} color="#10b981" history={netHist} onClick={() => openChart('net')} tc={tc} />
       </div>
 
       {/* ═══ DISK + NOW PLAYING ═══ */}
@@ -593,23 +746,23 @@ export default function App() {
           color="#6b7280"
           history={Array(60).fill(sys.disk_percent)}
           onClick={() => openChart('disk')}
-          artistTheme={artistTheme}
+          tc={tc}
         >
-          <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-none-none overflow-hidden mt-1">
-            <div className="h-full bg-[#6b7280] rounded-none-none transition-all duration-500" style={{ width: `${sys.disk_percent}%` }} />
+          <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden mt-1">
+            <div className="h-full bg-[#6b7280] rounded-full transition-all duration-500" style={{ width: `${sys.disk_percent}%` }} />
           </div>
         </MetricCard>
 
-        <Card clickable hover onClick={() => setModal('spotify')} artistTheme={artistTheme} className="relative flex flex-col gap-1.5">
-          <div className={cn('text-[9px] font-bold tracking-[0.12em]', artistTheme ? 'text-purple-400' : 'text-spotify')}>{t.nowPlaying}</div>
-          <div className={cn('text-[14px] font-bold truncate', artistTheme ? 'text-white' : 'text-[#1a1a1a] dark:text-[#e8e8ea]')}>
+        <Card clickable hover onClick={() => setModal('spotify')} tc={tc} className="relative flex flex-col gap-1.5">
+          <div className="text-[9px] font-bold tracking-[0.12em]" style={{ color: tc ? tc.nowPlayingColor : '#1DB954' }}>{t.nowPlaying}</div>
+          <div className={cn('text-[14px] font-bold truncate', tc ? '' : 'text-[#1a1a1a] dark:text-[#e8e8ea]')}>
             {settings.perfMode === 'eco' ? t.ecoNoSpotify : (spotify.playing ? spotify.track : t.notPlaying)}
           </div>
           {spotify.artist && settings.perfMode !== 'eco' && <div className="text-[10px] text-black/30 dark:text-white/30 truncate">{spotify.artist}</div>}
           <div className="absolute top-3 right-3 text-[10px] font-bold text-black/20 dark:text-white/20">↗</div>
           <div className="flex items-end gap-[2px] h-5 mt-auto">
             {Array(12).fill(0).map((_, i) => (
-              <div key={i} className={cn('flex-1 rounded-none-[2px_2px_0_0]', artistTheme ? 'bg-purple-400' : 'bg-spotify')}
+              <div key={i} className="flex-1 rounded-[2px_2px_0_0]" style={{ background: tc ? tc.sparkline : '#1DB954' }}
                 style={{ height: (spotify.playing && settings.perfMode !== 'eco') ? `${4 + Math.random() * 14}px` : '3px', opacity: 0.6, transition: 'height 0.3s' }}
               />
             ))}
@@ -620,8 +773,8 @@ export default function App() {
       {/* ═══ SYSTEM INFO + TOP PROCESSES ═══ */}
       <div className="grid grid-cols-2 gap-2.5">
         {/* System Info */}
-        <Card artistTheme={artistTheme} className="p-3.5">
-          <SectionLabel>{t.system}</SectionLabel>
+        <Card tc={tc} className="p-3.5">
+          <SectionLabel color={tc ? tc.accent : undefined}>{t.system}</SectionLabel>
           <div className="flex flex-col gap-1.5">
             {[
               ['CPU',   sysInfo.cpu_name.length > 20 ? sysInfo.cpu_name.slice(0,20)+'…' : sysInfo.cpu_name],
@@ -632,24 +785,24 @@ export default function App() {
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between border-b border-black/[0.04] dark:border-white/[0.04] pb-1.5 last:border-0 last:pb-0">
                 <span className="text-[9px] font-bold tracking-[0.1em] text-black/25 dark:text-white/25">{k}</span>
-                <span className={cn('text-[10px] font-semibold max-w-[110px] truncate text-right', artistTheme ? 'text-white/80' : 'text-[#333] dark:text-[#ccc]')}>{v}</span>
+                <span className="text-[10px] font-semibold max-w-[110px] truncate text-right" style={{ color: tc ? tc.textMuted : undefined }}>{v}</span>
               </div>
             ))}
           </div>
         </Card>
 
         {/* Top Processes */}
-        <Card artistTheme={artistTheme} className="p-3.5">
-          <SectionLabel>{t.topProcesses}</SectionLabel>
+        <Card tc={tc} className="p-3.5">
+          <SectionLabel color={tc ? tc.accent : undefined}>{t.topProcesses}</SectionLabel>
           <div className="flex flex-col gap-1.5">
             {procs.length === 0
               ? <div className="text-[10px] text-black/20 dark:text-white/20 py-2">No data</div>
               : procs.slice(0,4).map(p => (
                 <div key={p.pid} className="flex items-center gap-2 border-b border-black/[0.04] dark:border-white/[0.04] pb-1.5 last:border-0 last:pb-0">
                   <div className="flex-1 min-w-0">
-                    <div className={cn('text-[10px] font-semibold truncate', artistTheme ? 'text-white/80' : 'text-[#333] dark:text-[#ccc]')}>{p.name}</div>
-                    <div className="h-[2px] bg-black/[0.05] dark:bg-white/[0.08] rounded-none-none mt-0.5 overflow-hidden">
-                      <div className="h-full bg-blue-400 rounded-none-none transition-all duration-300" style={{ width: `${Math.min(100, p.cpu_percent)}%` }} />
+                    <div className="text-[10px] font-semibold truncate" style={{ color: tc ? tc.textMuted : undefined }}>{p.name}</div>
+                    <div className="h-[2px] bg-black/[0.05] dark:bg-white/[0.08] rounded-full mt-0.5 overflow-hidden">
+                      <div className="h-full bg-blue-400 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, p.cpu_percent)}%` }} />
                     </div>
                   </div>
                   <span className="text-[9px] font-mono text-black/30 dark:text-white/30 flex-shrink-0">{p.cpu_percent.toFixed(1)}%</span>
@@ -661,24 +814,24 @@ export default function App() {
       </div>
 
       {/* ═══ NOTES preview ═══ */}
-      <Card clickable hover onClick={() => setModal('notes')} artistTheme={artistTheme} className="relative flex flex-col gap-1.5">
+      <Card clickable hover onClick={() => setModal('notes')} tc={tc} className="relative flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <SectionLabel className="mb-0">{t.notes}</SectionLabel>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none-none bg-black/[0.05] dark:bg-white/[0.08] text-black/30 dark:text-white/30">{notes.length}</span>
+          <SectionLabel className="mb-0" color={tc ? tc.accent : undefined}>{t.notes}</SectionLabel>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-black/30 dark:text-white/30">{notes.length}</span>
         </div>
         {notes.length === 0
-          ? <div className={cn('text-[11px] flex-1 flex items-center', artistTheme ? 'text-white/30' : 'text-black/20 dark:text-white/20')}>{t.notesAdd}</div>
+          ? <div className="text-[11px] flex-1 flex items-center" style={{ color: tc ? tc.textMuted : undefined }}>{t.notesAdd}</div>
           : <div className="flex flex-col gap-1 flex-1">
               {notes.slice(0,3).map(n => (
                 <div key={n.id} className="flex items-center gap-1.5">
-                  <div className="w-1 h-1 rounded-none-none bg-blue-400 flex-shrink-0" />
+                  <div className="w-1 h-1 rounded-full bg-blue-400 flex-shrink-0" />
                   <span className="text-[10px] text-[#555] dark:text-[#999] truncate">{n.text.length > 30 ? n.text.slice(0,30)+'…' : n.text}</span>
                 </div>
               ))}
               {notes.length > 3 && <div className="text-[9px] text-black/20 dark:text-white/20 pl-2.5">{t.notesMore(notes.length - 3)}</div>}
             </div>
         }
-        <div className={cn('text-[9px] mt-auto', artistTheme ? 'text-white/20' : 'text-black/15 dark:text-white/15')}>{t.noteAddBtn}</div>
+        <div className="text-[9px] mt-auto" style={{ color: tc ? tc.textMuted : undefined }}>{t.noteAddBtn}</div>
         <div className="absolute top-3 right-3 text-[10px] font-bold text-black/20 dark:text-white/20">↗</div>
       </Card>
 
@@ -694,11 +847,11 @@ export default function App() {
             key={label}
             onClick={action}
             className={cn(
-              'flex flex-col items-center gap-1 py-2.5 rounded-none-none text-[9px] font-bold tracking-[0.05em] transition-all duration-150 border',
+              'flex flex-col items-center gap-1 py-2.5 rounded-2xl text-[9px] font-bold tracking-[0.05em] transition-all duration-150 border',
               gold
                 ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-amber-300 hover:opacity-90'
-                : artistTheme
-                ? 'bg-white/10 text-white/70 border-white/10 hover:bg-white/15'
+                : tc
+                ? 'hover:opacity-80'
                 : 'bg-white dark:bg-[#1c1c1e] text-black/40 dark:text-white/40 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
             )}
           >
@@ -711,15 +864,17 @@ export default function App() {
       <button
         onClick={() => setModal('actions')}
         className={cn(
-          'w-full flex items-center justify-center gap-2 py-3 rounded-none-none text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
-          artistTheme
-            ? 'bg-white/10 text-white border-white/10 hover:bg-white/15'
+          'w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
+          tc={tc}
+            ? ''
             : 'bg-white dark:bg-[#1c1c1e] text-black/50 dark:text-white/50 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
         )}
       >
         <Zap size={14} />
         {t.actions}
       </button>
+
+      </div>{/* end relative content */}
 
       {/* ═══ MODALS ═══ */}
       <ChartModal open={modal === 'chart'} onClose={() => setModal(null)} chartKey={chartKey} sys={sys} net={net} sysInfo={sysInfo} cpuHist={cpuHist} ramHist={ramHist} gpuHist={gpuHist} netHist={netHist} />
@@ -734,7 +889,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['false','true'] as const).map((v, i) => (
                 <button key={v} onClick={() => updateSettings({ darkTheme: i === 1 })}
-                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                     settings.darkTheme === (i === 1) ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{i === 0 ? t.light : t.dark}</button>
               ))}
@@ -746,7 +901,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['en','tr','es'] as Language[]).map(l => (
                 <button key={l} onClick={() => updateSettings({ language: l })}
-                  className={cn('px-2.5 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                  className={cn('px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                     settings.language === l ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{{ en: '🇬🇧 EN', tr: '🇹🇷 TR', es: '🇪🇸 ES' }[l]}</button>
               ))}
@@ -761,7 +916,7 @@ export default function App() {
                   updateSettings({ alwaysOnTop: v });
                   try { (await getWin()).setAlwaysOnTop(v); } catch {}
                 }}
-                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                     settings.alwaysOnTop === v ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{v ? t.on : t.off}</button>
               ))}
@@ -773,7 +928,7 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {[true, false].map((v) => (
                 <button key={String(v)} onClick={() => updateSettings({ startWithWindows: v })}
-                  className={cn('px-3 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                  className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                     settings.startWithWindows === v ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{v ? t.on : t.off}</button>
               ))}
@@ -785,24 +940,24 @@ export default function App() {
             <div className="flex gap-1 no-drag">
               {(['eco','normal','turbo'] as PerfMode[]).map(m => (
                 <button key={m} onClick={() => updateSettings({ perfMode: m })}
-                  className={cn('px-2.5 py-1.5 rounded-none-none text-[11px] font-semibold transition-all',
+                  className={cn('px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                     settings.perfMode === m ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]' : 'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'
                   )}>{PERF_CONFIG[m].icon} {PERF_CONFIG[m].label}</button>
               ))}
             </div>
           </div>
           {/* Perf info */}
-          <div className="pt-3 text-[10px] text-black/30 dark:text-white/30 bg-black/[0.02] dark:bg-white/[0.03] rounded-none-none px-3 py-2.5">
+          <div className="pt-3 text-[10px] text-black/30 dark:text-white/30 bg-black/[0.02] dark:bg-white/[0.03] rounded-xl px-3 py-2.5">
             {{ eco: t.perfEcoInfo, normal: t.perfNormalInfo, turbo: t.perfTurboInfo }[settings.perfMode]}
           </div>
           {/* Re-tour button */}
           <div className="pt-3">
-            <button onClick={() => { setModal(null); setShowTour(true); }} className="w-full py-2 rounded-none-none bg-blue-50 dark:bg-blue-900/20 text-[11px] font-semibold text-blue-500 hover:bg-blue-100 transition-colors">
+            <button onClick={() => { setModal(null); setShowTour(true); }} className="w-full py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[11px] font-semibold text-blue-500 hover:bg-blue-100 transition-colors">
               🗺 {settings.language === 'tr' ? 'Özellik turunu tekrar göster' : settings.language === 'es' ? 'Repetir tour de funciones' : 'Show feature tour again'}
             </button>
           </div>
         </div>
-        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
       </Modal>
 
       {/* Notes + Timer */}
@@ -822,12 +977,12 @@ export default function App() {
               const { invoke } = await import('@tauri-apps/api/core');
               invoke('system_action', { action: cmd }).catch(()=>{});
             }}
-              className="px-4 py-3 rounded-none-none bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06] text-[12px] font-semibold text-[#333] dark:text-[#ccc] text-left hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors">
+              className="px-4 py-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06] text-[12px] font-semibold text-[#333] dark:text-[#ccc] text-left hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors">
               {label}
             </button>
           ))}
         </div>
-        <button onClick={() => setModal(null)} className="mt-3 w-full py-2.5 rounded-none-none bg-red-50 dark:bg-red-900/20 text-[12px] font-semibold text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">✕ {t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-3 w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-[12px] font-semibold text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">✕ {t.close}</button>
       </Modal>
 
       {/* Changelog */}
@@ -868,7 +1023,7 @@ export default function App() {
               <div className="flex flex-col gap-1">
                 {items.map((item, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <div className={cn('w-1.5 h-1.5 rounded-none-none mt-1.5 flex-shrink-0',
+                    <div className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0',
                       item.type === 'add' && 'bg-green-400',
                       item.type === 'fix' && 'bg-blue-400',
                       item.type === 'imp' && 'bg-amber-400',
@@ -881,7 +1036,7 @@ export default function App() {
             </div>
           ))}
         </div>
-        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
+        <button onClick={() => setModal(null)} className="mt-4 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] transition-colors">{t.close}</button>
       </Modal>
 
       {/* World Clock */}

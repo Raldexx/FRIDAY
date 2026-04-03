@@ -1,29 +1,39 @@
 import { cn } from '@/lib/utils';
 
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
-  clickable?: boolean;
-  hover?: boolean;
-  onClick?: () => void;
-  artistTheme?: 'madison' | 'simge' | null;
+interface ArtistTC {
+  cardBg:     string;
+  cardBorder: string;
+  textPrimary:string;
+  textMuted:  string;
 }
 
-export function Card({ children, className, clickable, hover, onClick, artistTheme }: CardProps) {
-  const base = artistTheme === 'madison'
-    ? 'bg-[#2d1b4e]/80 border-purple-700/30 text-white'
-    : artistTheme === 'simge'
-    ? 'bg-[#1e3a5f]/80 border-blue-700/30 text-white'
-    : 'bg-white dark:bg-[#1c1c1e] border-black/[0.06] dark:border-white/[0.07]';
+interface CardProps {
+  children:    React.ReactNode;
+  className?:  string;
+  clickable?:  boolean;
+  hover?:      boolean;
+  onClick?:    () => void;
+  artistTheme?: 'madison' | 'icardi' | null;
+  tc?:         ArtistTC | null;
+}
+
+export function Card({ children, className, clickable, hover, onClick, artistTheme, tc }: CardProps) {
+  const inlineStyle = tc ? {
+    background: tc.cardBg,
+    borderColor: tc.cardBorder,
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+  } : undefined;
 
   return (
     <div
       onClick={onClick}
+      style={inlineStyle}
       className={cn(
-        'rounded-none-none border p-3.5 transition-all duration-150',
-        base,
-        hover && !artistTheme && 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]',
-        hover && artistTheme && 'hover:opacity-90',
+        'rounded-2xl border p-3.5 transition-all duration-150',
+        !tc && 'bg-white dark:bg-[#1c1c1e] border-black/[0.06] dark:border-white/[0.07]',
+        hover && !tc && 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]',
+        hover && tc && 'hover:opacity-90',
         clickable && 'cursor-pointer',
         className,
       )}
@@ -34,14 +44,19 @@ export function Card({ children, className, clickable, hover, onClick, artistThe
 }
 
 interface SectionLabelProps {
-  children: React.ReactNode;
+  children:  React.ReactNode;
   className?: string;
+  color?:    string;
 }
 
-export function SectionLabel({ children, className }: SectionLabelProps) {
+export function SectionLabel({ children, className, color }: SectionLabelProps) {
   return (
-    <div className={cn('text-[9px] font-bold tracking-[0.14em] text-black/30 dark:text-white/30 mb-2', className)}>
-      {children}
+    <div
+      className={cn('text-[9px] font-bold tracking-[0.14em] mb-2', className)}
+      style={{ color: color || undefined }}
+    >
+      {!color && <span className="text-black/30 dark:text-white/30">{children}</span>}
+      {color && children}
     </div>
   );
 }

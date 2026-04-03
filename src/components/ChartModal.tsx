@@ -51,7 +51,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
         {history.map((v, i) => (
           <div
             key={i}
-            className="flex-1 rounded-none-[3px_3px_0_0] transition-all duration-300"
+            className="flex-1 rounded-[3px_3px_0_0] transition-all duration-300"
             style={{
               height: Math.max(3, (v / max) * 100),
               background: meta.color,
@@ -66,7 +66,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
 
       {/* System info contextual */}
       {chartKey === 'cpu' && (
-        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-none-none p-3 space-y-2">
+        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-xl p-3 space-y-2">
           <div className="text-[9px] font-bold tracking-[0.12em] text-black/30 dark:text-white/30 mb-2">SYSTEM INFO</div>
           {[
             ['CPU',   sysInfo.cpu_name || '...'],
@@ -84,7 +84,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
       )}
 
       {chartKey === 'ram' && (
-        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-none-none p-3 space-y-2">
+        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-xl p-3 space-y-2">
           <div className="text-[9px] font-bold tracking-[0.12em] text-black/30 dark:text-white/30 mb-2">MEMORY</div>
           {[
             ['Total', `${sysInfo.ram_total_gb.toFixed(1)} GB`],
@@ -100,7 +100,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
       )}
 
       {chartKey === 'disk' && (
-        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-none-none p-3 space-y-2">
+        <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-xl p-3 space-y-2">
           <div className="text-[9px] font-bold tracking-[0.12em] text-black/30 dark:text-white/30 mb-2">STORAGE</div>
           {[
             ['Used', `${Math.round(sys.disk_percent)}%`],
@@ -116,7 +116,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
 
       <button
         onClick={onClose}
-        className="mt-4 w-full py-2.5 rounded-none-none bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] dark:hover:bg-white/[0.1] transition-colors"
+        className="mt-4 w-full py-2.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-[12px] font-semibold text-black/40 dark:text-white/40 hover:bg-black/[0.07] dark:hover:bg-white/[0.1] transition-colors"
       >
         Close
       </button>

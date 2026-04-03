@@ -1,50 +1,60 @@
 import { Card } from '@/components/ui/Card';
 import { colorForPct } from '@/lib/utils';
-import { cn } from '@/lib/utils';
 
-interface MetricCardProps {
-  label:       string;
-  value:       string;
-  sub?:        string;
-  color:       string;
-  history:     number[];
-  onClick?:    () => void;
-  children?:   React.ReactNode;
-  artistTheme?: 'madison' | 'simge' | null;
+interface ArtistTC {
+  cardBg:      string;
+  cardBorder:  string;
+  textPrimary: string;
+  textMuted:   string;
+  sparkline:   string;
+  accent:      string;
 }
 
-export function MetricCard({ label, value, sub, color, history, onClick, children, artistTheme }: MetricCardProps) {
+interface MetricCardProps {
+  label:      string;
+  value:      string;
+  sub?:       string;
+  color:      string;
+  history:    number[];
+  onClick?:   () => void;
+  children?:  React.ReactNode;
+  tc?:        ArtistTC | null;
+}
+
+export function MetricCard({ label, value, sub, color, history, onClick, children, tc }: MetricCardProps) {
   const pct = parseFloat(value);
   const danger = colorForPct(pct);
 
-  // For artist themes use lighter sparkline
-  const barColor = artistTheme === 'madison' ? '#c084fc' : artistTheme === 'simge' ? '#60a5fa' : danger || color;
+  const labelColor = tc ? tc.accent : color;
+  const barColor   = tc ? tc.sparkline : (danger || color);
+  const bigNumColor = tc ? tc.textPrimary : (danger || undefined);
+  const subColor   = tc ? tc.textMuted : undefined;
 
   return (
-    <Card
-      clickable={!!onClick}
-      hover
-      onClick={onClick}
-      artistTheme={artistTheme}
-      className="relative flex flex-col gap-1.5"
-    >
+    <Card clickable={!!onClick} hover onClick={onClick} tc={tc} className="relative flex flex-col gap-1.5">
       {/* Label */}
-      <div className="text-[9px] font-bold tracking-[0.12em] uppercase" style={{ color: artistTheme ? (artistTheme === 'madison' ? '#c084fc' : '#60a5fa') : color }}>
+      <div className="text-[9px] font-bold tracking-[0.12em] uppercase" style={{ color: labelColor }}>
         {label}
       </div>
 
       {/* Big number */}
       <div
-        className={cn('text-[38px] font-extrabold leading-none tracking-tight', artistTheme ? 'text-white' : 'text-[#1a1a1a] dark:text-[#e8e8ea]')}
-        style={{ color: artistTheme ? undefined : (danger || undefined) }}
+        className="text-[38px] font-extrabold leading-none tracking-tight"
+        style={{ color: bigNumColor || (tc ? tc.textPrimary : '#1a1a1a') }}
       >
         {value}
       </div>
 
-      {sub && <div className={cn('text-[10px]', artistTheme ? 'text-white/40' : 'text-black/30 dark:text-white/30')}>{sub}</div>}
+      {sub && (
+        <div className="text-[10px]" style={{ color: subColor || undefined }}>
+          <span className={tc ? '' : 'text-black/30 dark:text-white/30'}>{sub}</span>
+        </div>
+      )}
 
       {onClick && (
-        <div className="absolute top-3 right-3 text-[10px] font-bold text-black/20 dark:text-white/20">↗</div>
+        <div className="absolute top-3 right-3 text-[10px] font-bold" style={{ color: tc ? 'rgba(255,255,255,0.2)' : undefined }}>
+          <span className={tc ? '' : 'text-black/20 dark:text-white/20'}>↗</span>
+        </div>
       )}
 
       {/* Sparkline */}
@@ -56,7 +66,7 @@ export function MetricCard({ label, value, sub, color, history, onClick, childre
           return (
             <div
               key={i}
-              className="flex-1 rounded-none-[2px_2px_0_0] transition-all duration-300"
+              className="flex-1 rounded-[2px_2px_0_0] transition-all duration-300"
               style={{ height: h, background: barColor, opacity }}
             />
           );

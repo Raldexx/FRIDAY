@@ -24,11 +24,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 0; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 99px; }
 .dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); }
 
 /* Soft window corners */
-body { border-radius: 0; overflow: hidden; }
+body { border-radius: 18px; overflow: hidden; }
 
 /* Spotify */
 .text-spotify { color: #1DB954; }
@@ -38,4 +38,20 @@ body { border-radius: 0; overflow: hidden; }
 @keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:.55} }
 .animate-pulse2 { animation: pulse2 1.4s ease-in-out infinite; }
 
-html, body, #root {height:100%; overflow-y:auto; overflow-x:hidden;}
+/* ── Artist theme animations ── */
+@keyframes twinkle {
+  0%,100% { opacity:0.15; transform:scale(1); }
+  50%      { opacity:0.4;  transform:scale(1.4); }
+}
+@keyframes drift {
+  0%,100% { transform:translateY(0px) rotate(-8deg); }
+  50%      { transform:translateY(-12px) rotate(8deg); }
+}
+@keyframes spark {
+  0%,100% { transform:scale(1); opacity:0.35; }
+  50%      { transform:scale(2.2); opacity:0.6; }
+}
+@keyframes float0 { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-10px) rotate(5deg)} }
+@keyframes float1 { 0%,100%{transform:translateY(0) rotate(3deg)} 50%{transform:translateY(-14px) rotate(-4deg)} }
+@keyframes float2 { 0%,100%{transform:translateY(0) rotate(-7deg)} 50%{transform:translateY(-8px) rotate(7deg)} }
+@keyframes float3 { 0%,100%{transform:translateY(0) rotate(5deg)} 50%{transform:translateY(-16px) rotate(-5deg)} }
