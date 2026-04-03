@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, BarChart2, Zap, Minus, Maximize2, X, Crown, Image, Clock } from 'lucide-react';
-import { useSystemData, PERF_CONFIG, TRANSLATIONS, type PerfMode, type Language } from '@/store/system';
+import { useSystemData, PERF_CONFIG, TRANSLATIONS, type PerfMode, type Language, type I18n } from '@/store/system';
 import { Card, SectionLabel } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { MetricCard } from '@/components/MetricCard';
@@ -233,7 +233,7 @@ const WORLD_CITIES = [
   { name: 'Mexico City',  tz: 'America/Mexico_City' },
 ];
 
-function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: typeof TRANSLATIONS['en'] }) {
+function WorldClockModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: I18n }) {
   const [search, setSearch] = useState('');
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -390,7 +390,7 @@ function ImageToolsModal({ open, onClose, dark }: { open: boolean; onClose: () =
 }
 
 // ── Premium Modal ─────────────────────────────────────────────────────────────
-function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: typeof TRANSLATIONS['en'] }) {
+function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: I18n }) {
   return (
     <Modal open={open} onClose={onClose} title={t.premiumTitle}>
       <div className="flex flex-col items-center gap-4 py-2">
@@ -418,7 +418,7 @@ function PremiumModal({ open, onClose, t }: { open: boolean; onClose: () => void
 }
 
 // ── First-run Tour ────────────────────────────────────────────────────────────
-function TourModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: typeof TRANSLATIONS['en'] }) {
+function TourModal({ open, onClose, t }: { open: boolean; onClose: () => void; t: I18n }) {
   const [step, setStep] = useState(0);
   const steps = Object.values(t.tour);
   const isLast = step === steps.length - 1;
@@ -460,7 +460,7 @@ function TourModal({ open, onClose, t }: { open: boolean; onClose: () => void; t
 
 // ── Notes + Timer Modal ───────────────────────────────────────────────────────
 function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }: {
-  open: boolean; onClose: () => void; t: typeof TRANSLATIONS['en'];
+  open: boolean; onClose: () => void; t: I18n;
   notes: Note[]; addNote: (s: string) => void; removeNote: (id: number) => void; updateNote: (id: number, s: string) => void;
 }) {
   const [noteInput, setNoteInput] = useState('');
@@ -601,7 +601,7 @@ function NotesModal({ open, onClose, t, notes, addNote, removeNote, updateNote }
 // ── Main App ───────────────────────────────────────────────────────────────────
 export default function App() {
   const { sys, net, spotify, procs, weather, sysInfo, isDemo, cpuHist, ramHist, gpuHist, netHist, settings, updateSettings } = useSystemData();
-  const t = TRANSLATIONS[settings.language];
+  const t: I18n = TRANSLATIONS[settings.language];
   const clock = useClock(settings.language);
   const { notes, add: addNote, remove: removeNote, update: updateNote } = useNotes();
 
@@ -762,8 +762,8 @@ export default function App() {
           <div className="absolute top-3 right-3 text-[10px] font-bold text-black/20 dark:text-white/20">↗</div>
           <div className="flex items-end gap-[2px] h-5 mt-auto">
             {Array(12).fill(0).map((_, i) => (
-              <div key={i} className="flex-1 rounded-[2px_2px_0_0]" style={{ background: tc ? tc.sparkline : '#1DB954' }}
-                style={{ height: (spotify.playing && settings.perfMode !== 'eco') ? `${4 + Math.random() * 14}px` : '3px', opacity: 0.6, transition: 'height 0.3s' }}
+              <div key={i} className="flex-1 rounded-[2px_2px_0_0]"
+                style={{ background: tc ? tc.sparkline : '#1DB954', height: (spotify.playing && settings.perfMode !== 'eco') ? `${4 + Math.random() * 14}px` : '3px', opacity: 0.6, transition: 'height 0.3s' }}
               />
             ))}
           </div>
@@ -865,9 +865,7 @@ export default function App() {
         onClick={() => setModal('actions')}
         className={cn(
           'w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
-          tc={tc}
-            ? ''
-            : 'bg-white dark:bg-[#1c1c1e] text-black/50 dark:text-white/50 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
+          tc ? '' : 'bg-white dark:bg-[#1c1c1e] text-black/50 dark:text-white/50 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
         )}
       >
         <Zap size={14} />

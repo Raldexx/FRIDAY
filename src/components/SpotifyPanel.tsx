@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import type { SpotifyInfo } from '@/store/system';
-import type { T } from '@/store/system';
+import type { SpotifyInfo, I18n } from '@/store/system';
 
 interface SpotifyPanelProps {
   open:    boolean;
   onClose: () => void;
   spotify: SpotifyInfo;
-  t:       T;
+  t:       I18n;
   isEco:   boolean;
 }
 

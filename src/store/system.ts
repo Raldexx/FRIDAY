@@ -55,7 +55,7 @@ export const PERF_CONFIG = {
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
 
-export const TRANSLATIONS = {
+export const TRANSLATIONS: Record<Language, I18n> = {
   en: {
     systemMonitor: 'SYSTEM MONITOR',
     settings: 'Settings',
@@ -271,7 +271,79 @@ export const TRANSLATIONS = {
   },
 } as const;
 
-export type T = typeof TRANSLATIONS['en'];
+export interface I18n {
+  systemMonitor: string;
+  settings: string;
+  changelog: string;
+  actions: string;
+  notes: string;
+  notesAdd: string;
+  notesMore: (n: number) => string;
+  noteAddBtn: string;
+  nowPlaying: string;
+  notPlaying: string;
+  openSpotify: string;
+  system: string;
+  theme: string;
+  light: string;
+  dark: string;
+  alwaysOnTop: string;
+  on: string;
+  off: string;
+  performance: string;
+  close: string;
+  language: string;
+  startWithWindows: string;
+  quickNotes: string;
+  notePlaceholder: string;
+  update: string;
+  add: string;
+  cancel: string;
+  edit: string;
+  delete: string;
+  noNotes: string;
+  quickActions: string;
+  restart: string;
+  shutdown: string;
+  sleep: string;
+  confirmRestart: string;
+  confirmShutdown: string;
+  music: string;
+  recentlyPlayed: string;
+  visualizer: string;
+  musicService: string;
+  stats: string;
+  demoMode: string;
+  uptime: string;
+  free: string;
+  perfEcoInfo: string;
+  perfNormalInfo: string;
+  perfTurboInfo: string;
+  topProcesses: string;
+  ecoNoSpotify: string;
+  premium: string;
+  premiumTitle: string;
+  timer: string;
+  worldClock: string;
+  searchCity: string;
+  imageTools: string;
+  firstRunTitle: string;
+  firstRunDesc: string;
+  tour: {
+    cpu: string;
+    network: string;
+    disk: string;
+    nowPlaying: string;
+    system: string;
+    notes: string;
+    settings: string;
+    actions: string;
+    clock: string;
+  };
+  gotIt: string;
+}
+
+export type T = I18n;
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
