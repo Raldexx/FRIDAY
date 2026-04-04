@@ -76,83 +76,35 @@ const THEME_CFG: Record<NonNullable<ArtistTheme>, ThemeConfig> = {
   },
 };
 
-// ── Artist Background with real photo ────────────────────────────────────────
+// ── Artist Background — only photo + dark veil, zero decorations ─────────────
 function ArtistBackground({ theme }: { theme: NonNullable<ArtistTheme> }) {
   const cfg = THEME_CFG[theme];
   return (
     <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0, borderRadius:'inherit' }}>
-
-      {/* Full-cover photo layer — no mask, just opacity + gradient overlay on top */}
+      {/* The real photo, full cover */}
       <img
         src={cfg.photo}
         alt=""
+        draggable={false}
         style={{
-          position:'absolute',
+          position: 'absolute',
           inset: 0,
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: theme === 'icardi' ? 'center 20%' : 'center center',
-          opacity: 0.30,
-          filter: theme === 'icardi' ? 'saturate(1.3) brightness(0.85)' : 'saturate(1.1) brightness(0.80)',
+          objectPosition: theme === 'icardi' ? 'center 15%' : 'center 30%',
+          opacity: 0.55,
+          filter: 'brightness(0.75) saturate(0.9)',
+          pointerEvents: 'none',
+          userSelect: 'none',
         }}
       />
-
-      {/* Dark gradient on top so cards remain readable */}
+      {/* Single dark overlay so text stays readable — that's all */}
       <div style={{
-        position:'absolute', inset:0,
-        background: theme === 'icardi'
-          ? 'linear-gradient(160deg, rgba(10,0,0,0.82) 0%, rgba(30,5,0,0.60) 50%, rgba(10,0,0,0.45) 100%)'
-          : 'linear-gradient(160deg, rgba(13,0,24,0.85) 0%, rgba(26,0,48,0.62) 50%, rgba(45,10,26,0.45) 100%)',
-        pointerEvents:'none',
+        position: 'absolute', inset: 0,
+        background: 'rgba(0,0,0,0.52)',
+        pointerEvents: 'none',
       }} />
-
-      {/* Accent glow */}
-      <div style={{
-        position:'absolute', inset:0,
-        background: theme === 'icardi'
-          ? 'radial-gradient(ellipse at 75% 85%, rgba(220,38,38,0.18) 0%, transparent 55%)'
-          : 'radial-gradient(ellipse at 70% 70%, rgba(232,121,249,0.15) 0%, transparent 55%)',
-        pointerEvents:'none',
-      }} />
-
-      {/* Madison: floating music notes */}
-      {theme === 'madison' && ['♪','♫','♩','♬'].map((n,i) => (
-        <div key={i} style={{
-          position:'absolute', right:`${24+i*22}px`, top:`${80+i*60}px`,
-          fontSize:`${14+i*3}px`, color:'rgba(232,121,249,0.28)',
-          animation:`drift ${3.5+i*0.8}s ease-in-out infinite`,
-          animationDelay:`${i*0.6}s`,
-          pointerEvents:'none',
-        }}>{n}</div>
-      ))}
-
-      {/* Icardi: Galatasaray badge + 99 watermark */}
-      {theme === 'icardi' && <>
-        <div style={{
-          position:'absolute', right:'10px', bottom:'24px',
-          fontSize:'180px', fontWeight:'900', fontStyle:'italic',
-          color:'rgba(251,191,36,0.07)', lineHeight:1,
-          fontFamily:'Georgia,serif', userSelect:'none', pointerEvents:'none',
-        }}>99</div>
-        <svg viewBox="0 0 100 110" style={{ position:'absolute', right:'12px', top:'14px', width:'46px', height:'52px', opacity:0.16, pointerEvents:'none' }}>
-          <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" fill="#dc2626"/>
-          <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" stroke="#fbbf24" strokeWidth="3.5" fill="none"/>
-          <text x="50" y="70" textAnchor="middle" fontSize="36" fontWeight="900" fill="#fbbf24" fontFamily="serif">G</text>
-        </svg>
-        {/* Spark dots */}
-        {Array(8).fill(0).map((_,i)=>(
-          <div key={i} style={{
-            position:'absolute',
-            right:`${18+(i*23)%75}px`, bottom:`${35+(i*37)%200}px`,
-            width:`${2+i%2}px`, height:`${2+i%2}px`, borderRadius:'50%',
-            background: i%2===0 ? 'rgba(251,191,36,0.45)' : 'rgba(220,38,38,0.45)',
-            animation:`spark ${1.4+i*0.25}s ease-in-out infinite`,
-            animationDelay:`${i*0.18}s`,
-            pointerEvents:'none',
-          }}/>
-        ))}
-      </>}
     </div>
   );
 }
@@ -241,23 +193,43 @@ function WorldClockModal({ open, onClose, t, tc }: { open:boolean; onClose:()=>v
   );
 }
 
-// ── Image Tools Modal ─────────────────────────────────────────────────────────
+// ── Image Tools Modal ────────────────────────────────────────────────────────
 function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void; tc:ThemeConfig|null }) {
-  const [img, setImg]         = useState<string|null>(null);
+  const [img, setImg]           = useState<string|null>(null);
   const [fileName, setFileName] = useState('');
-  const [tab, setTab]         = useState<'edit'|'upscale'|'sort'>('edit');
-  const [op, setOp]           = useState<string|null>(null);
+  const [tab, setTab]           = useState<'edit'|'upscale'|'sort'>('edit');
+  const [op, setOp]             = useState<string|null>(null);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast]     = useState(100);
   const [upscaleScale, setUpscaleScale] = useState(2);
   const [processing, setProcessing] = useState(false);
-  const [sortResult, setSortResult] = useState<string|null>(null);
+  // Sort state
+  const [srcFolder, setSrcFolder]     = useState('');
+  const [outFolder, setOutFolder]     = useState('');
+  const [sortMode, setSortMode]       = useState<'copy'|'move'>('copy');
+  const [sortStatus, setSortStatus]   = useState('');
+  const [sortRunning, setSortRunning] = useState(false);
+  const [pythonVer, setPythonVer]     = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const v = await invoke<string>('check_python');
+        setPythonVer(v || 'not_found');
+      } catch { setPythonVer('not_found'); }
+    })();
+  }, [open]);
 
   function loadFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
     setFileName(f.name);
-    const r = new FileReader(); r.onload = ev => { setImg(ev.target?.result as string); setOp(null); }; r.readAsDataURL(f);
+    const r = new FileReader();
+    r.onload = ev => { setImg(ev.target?.result as string); setOp(null); };
+    r.readAsDataURL(f);
   }
+
   function getFilter() {
     if (op==='grayscale') return 'grayscale(100%)';
     if (op==='invert')    return 'invert(100%)';
@@ -267,10 +239,11 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
     if (op==='contrast')  return `contrast(${contrast}%)`;
     return 'none';
   }
+
   function download() {
     if (!img) return;
     const canvas = document.createElement('canvas');
-    const image = new window.Image();
+    const image  = new window.Image();
     image.onload = () => {
       canvas.width=image.width; canvas.height=image.height;
       const ctx=canvas.getContext('2d')!; ctx.filter=getFilter(); ctx.drawImage(image,0,0);
@@ -283,7 +256,7 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
   async function doUpscale() {
     if (!img) return;
     setProcessing(true);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 50));
     const image = new window.Image();
     image.onload = () => {
       const canvas = document.createElement('canvas');
@@ -302,127 +275,202 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
     image.src = img;
   }
 
-  const tabStyle = (active: boolean) => cn(
-    'flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all',
-    active
-      ? tc ? 'text-white' : 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]'
-      : tc ? 'text-white/30' : 'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40'
-  );
-  const activeTabStyle = (active: boolean): React.CSSProperties => tc && active
-    ? { background: tc.accent, color: '#000' } : {};
+  async function pickFolder(setter: (v:string)=>void) {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const path = await invoke<string>('open_folder_picker');
+      if (path) setter(path);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!msg.includes('cancelled')) setSortStatus('❌ ' + msg);
+    }
+  }
+
+  async function runSort() {
+    if (!srcFolder) { setSortStatus('❌ Select source folder first'); return; }
+    const out = outFolder || srcFolder + '\\Sorted';
+    setSortRunning(true);
+    setSortStatus('⏳ Sorting...');
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const result = await invoke<string>('sort_files', { folder: srcFolder, output: out, mode: sortMode });
+      setSortStatus(result);
+    } catch (e: unknown) {
+      setSortStatus('❌ ' + (e instanceof Error ? e.message : String(e)));
+    }
+    setSortRunning(false);
+  }
+
+  async function launchCLI() {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const result = await invoke<string>('open_image_tools_cli');
+      setSortStatus('✅ ' + result);
+    } catch (e: unknown) {
+      setSortStatus('❌ ' + (e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  // Shared styles
+  const panelBg: React.CSSProperties  = tc ? { background:'rgba(255,255,255,0.05)', borderRadius:12, padding:10 } : { background:'rgba(0,0,0,0.03)', borderRadius:12, padding:10 };
+  const inputCls = cn('w-full px-2.5 py-1.5 rounded-lg border text-[11px] focus:outline-none',
+    tc ? 'bg-white/5 border-white/10 text-white placeholder-white/30' : 'bg-white dark:bg-[#1c1c1e] border-black/[0.08] dark:border-white/[0.1] text-[#1a1a1a] dark:text-[#e8e8ea]');
+  const btnPrimary = cn('py-2 rounded-xl text-[11px] font-bold transition-all');
+  const btnSec     = cn('py-1.5 rounded-lg text-[10px] font-semibold transition-all border');
+
+  const tabActive  = tc ? { background: tc.accent, color: '#000' } : undefined;
+  const tabInactive: React.CSSProperties = tc ? { background:'rgba(255,255,255,0.07)', color: tc.textMuted } : {};
 
   const editOps = [
-    {key:'grayscale',label:'Grayscale',icon:'◑'},
-    {key:'invert',label:'Invert',icon:'◎'},
-    {key:'sepia',label:'Sepia',icon:'🟫'},
-    {key:'blur',label:'Blur',icon:'◌'},
-    {key:'brightness',label:'Brightness',icon:'☀'},
-    {key:'contrast',label:'Contrast',icon:'◧'},
+    {key:'grayscale',label:'Grayscale',icon:'◑'},{key:'invert',label:'Invert',icon:'◎'},
+    {key:'sepia',label:'Sepia',icon:'▩'},{key:'blur',label:'Blur',icon:'◌'},
+    {key:'brightness',label:'Bright',icon:'☀'},{key:'contrast',label:'Contrast',icon:'◧'},
   ];
 
   return (
     <Modal open={open} onClose={onClose} title="IMAGE TOOLS" wide tc={tc}>
-      {/* Tabs */}
-      <div className="flex gap-1 mb-3 no-drag" style={tc?{background:'rgba(255,255,255,0.05)',padding:'4px',borderRadius:'12px'}:{background:'rgba(0,0,0,0.04)',padding:'4px',borderRadius:'12px'}}>
-        {(['edit','upscale','sort'] as const).map(tab2 => (
-          <button key={tab2} onClick={()=>setTab(tab2)}
-            className={tabStyle(tab===tab2)} style={activeTabStyle(tab===tab2)}>
-            {tab2 === 'edit' ? '🎨 Edit' : tab2 === 'upscale' ? '🔍 Upscale' : '📂 Sort'}
+      {/* Tab bar */}
+      <div className="flex gap-1 mb-3 no-drag p-1 rounded-xl" style={tc?{background:'rgba(255,255,255,0.06)'}:{background:'rgba(0,0,0,0.04)'}}>
+        {(['edit','upscale','sort'] as const).map(t2=>(
+          <button key={t2} onClick={()=>setTab(t2)}
+            style={tab===t2 ? (tc?tabActive:{}) : (tc?tabInactive:{})}
+            className={cn('flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all',
+              !tc&&(tab===t2?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]':'text-black/40 dark:text-white/40'))}>
+            {t2==='edit'?'🎨 Edit':t2==='upscale'?'🔍 Upscale':'📂 Sort'}
           </button>
         ))}
       </div>
 
-      {/* Upload */}
-      <label className={cn('flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors no-drag mb-3',
-        tc ? 'border-white/15 hover:border-white/30 text-white/40' : 'border-black/[0.12] dark:border-white/[0.12] hover:bg-black/[0.02] dark:hover:bg-white/[0.03] text-black/40 dark:text-white/40')}>
-        <Image size={14} />
-        <span className="text-[11px]">{fileName || 'Click to upload image'}</span>
-        <input type="file" accept="image/*" className="hidden" onChange={loadFile} />
-      </label>
-
-      {tab === 'edit' && img && (
-        <>
-          <div className="relative rounded-2xl overflow-hidden flex items-center justify-center mb-3" style={{minHeight:140,maxHeight:200,background:tc?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.03)'}}>
-            <img src={img} alt="preview" style={{maxHeight:190,maxWidth:'100%',filter:getFilter(),borderRadius:10,transition:'filter 0.3s'}} />
+      {/* ── EDIT TAB ── */}
+      {tab==='edit' && <>
+        <label className={cn('flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer mb-3 no-drag',
+          tc?'border-white/15 hover:border-white/30':'border-black/[0.10] dark:border-white/[0.12] hover:bg-black/[0.02]')}>
+          <Image size={14} style={tc?{color:tc.textMuted}:{}} className={!tc?'text-black/30 dark:text-white/30':''}/>
+          <span className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>{fileName||'Click to upload image'}</span></span>
+          <input type="file" accept="image/*" className="hidden" onChange={loadFile}/>
+        </label>
+        {img && <>
+          <div className="rounded-xl overflow-hidden flex items-center justify-center mb-3" style={{...panelBg, minHeight:130, maxHeight:200, padding:0}}>
+            <img src={img} alt="preview" style={{maxHeight:195,maxWidth:'100%',filter:getFilter(),borderRadius:10,transition:'filter 0.25s'}}/>
           </div>
-          <div className="grid grid-cols-3 gap-1.5 mb-3">
-            {editOps.map(o => (
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
+            {editOps.map(o=>(
               <button key={o.key} onClick={()=>setOp(prev=>prev===o.key?null:o.key)}
-                style={op===o.key && tc ? {background:tc.accent,color:'#000',borderColor:'transparent'} : tc ? {background:tc.cardBg,borderColor:tc.cardBorder,color:tc.textMuted} : undefined}
-                className={cn('py-1.5 rounded-xl text-[10px] font-semibold transition-all border',
-                  !tc && (op===o.key ? 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent'
-                                     : 'bg-black/[0.03] dark:bg-white/[0.04] border-black/[0.06] dark:border-white/[0.06] text-black/50 dark:text-white/50'))}>
+                style={op===o.key?(tc?{background:tc.accent,color:'#000',border:'none'}:undefined):(tc?{background:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.10)',color:tc.textMuted}:undefined)}
+                className={cn(btnSec,!tc&&(op===o.key?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent':'bg-black/[0.03] dark:bg-white/[0.04] border-black/[0.06] dark:border-white/[0.06] text-black/50 dark:text-white/50'))}>
                 {o.icon} {o.label}
               </button>
             ))}
           </div>
-          {op==='brightness' && <div className="flex items-center gap-3 no-drag mb-2"><span className="text-[10px] w-20" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Brightness</span></span><input type="range" min={0} max={200} value={brightness} onChange={e=>setBrightness(+e.target.value)} className="flex-1"/><span className="text-[10px] font-mono w-8" style={{color:tc?tc.textMuted:undefined}}>{brightness}%</span></div>}
-          {op==='contrast' && <div className="flex items-center gap-3 no-drag mb-2"><span className="text-[10px] w-20" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Contrast</span></span><input type="range" min={0} max={200} value={contrast} onChange={e=>setContrast(+e.target.value)} className="flex-1"/><span className="text-[10px] font-mono w-8" style={{color:tc?tc.textMuted:undefined}}>{contrast}%</span></div>}
+          {op==='brightness'&&<div className="flex items-center gap-2 mb-2 no-drag"><span className="text-[10px] w-14" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Bright</span></span><input type="range" min={0} max={200} value={brightness} onChange={e=>setBrightness(+e.target.value)} className="flex-1"/><span className="text-[10px] w-8 font-mono" style={tc?{color:tc.textMuted}:{}}>{brightness}%</span></div>}
+          {op==='contrast'&&<div className="flex items-center gap-2 mb-2 no-drag"><span className="text-[10px] w-14" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Contrast</span></span><input type="range" min={0} max={200} value={contrast} onChange={e=>setContrast(+e.target.value)} className="flex-1"/><span className="text-[10px] w-8 font-mono" style={tc?{color:tc.textMuted}:{}}>{contrast}%</span></div>}
           <button onClick={download} style={tc?{background:tc.accent,color:'#000'}:undefined}
-            className={cn('w-full py-2.5 rounded-xl text-[12px] font-bold transition-opacity hover:opacity-80',
-              !tc && 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]')}>
-            ⬇ Download
+            className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]')}>
+            ⬇ Download edited image
           </button>
-        </>
-      )}
+        </>}
+      </>}
 
-      {tab === 'upscale' && (
-        <div className="flex flex-col gap-3">
-          <div className="text-[11px] font-semibold" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Upscale factor (browser-based, uses Lanczos-like smoothing)</span></div>
+      {/* ── UPSCALE TAB ── */}
+      {tab==='upscale' && <div className="flex flex-col gap-3">
+        <div className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Browser upscale (Lanczos-quality) — for Smart/Photo/Sharpen algorithms use the CLI below.</span></div>
+        <label className={cn('flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer no-drag',
+          tc?'border-white/15 hover:border-white/30':'border-black/[0.10] dark:border-white/[0.12]')}>
+          <Image size={14} style={tc?{color:tc.textMuted}:{}} className={!tc?'text-black/30':''}/>
+          <span className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>{fileName||'Click to upload image'}</span></span>
+          <input type="file" accept="image/*" className="hidden" onChange={loadFile}/>
+        </label>
+        <div className="flex gap-2 no-drag">
+          {[2,3,4].map(s=>(
+            <button key={s} onClick={()=>setUpscaleScale(s)}
+              style={upscaleScale===s?(tc?{background:tc.accent,color:'#000',border:'none'}:undefined):(tc?{background:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.10)',color:tc.textMuted}:undefined)}
+              className={cn('flex-1 py-2 rounded-xl text-[13px] font-bold border transition-all',
+                !tc&&(upscaleScale===s?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent':'bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.08] dark:border-white/[0.08] text-black/50 dark:text-white/50'))}>
+              x{s}
+            </button>
+          ))}
+        </div>
+        <button onClick={doUpscale} disabled={!img||processing}
+          style={!(!img||processing)&&tc?{background:tc.accent,color:'#000'}:undefined}
+          className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]',(!img||processing)&&'opacity-40 cursor-not-allowed')}>
+          {processing?'⏳ Processing...':`🔍 Upscale ×${upscaleScale} & Download`}
+        </button>
+        {/* CLI launcher */}
+        <div style={panelBg}>
+          <div className="text-[10px] font-bold mb-2" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Advanced CLI (Smart/Photo/Sharpen algorithms)</span></div>
+          <div className="text-[10px] mb-2" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Python: <span className="font-mono">{pythonVer==='not_found'?'❌ Not found':pythonVer}</span></span></div>
+          <button onClick={launchCLI}
+            style={tc?{background:tc.accent,color:'#000'}:undefined}
+            className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]')}>
+            🚀 Launch image_upscaler.py in Terminal
+          </button>
+          {sortStatus&&<div className="mt-2 text-[10px]" style={tc?{color:tc.textMuted}:{}}>{sortStatus}</div>}
+        </div>
+      </div>}
+
+      {/* ── SORT TAB ── */}
+      {tab==='sort' && <div className="flex flex-col gap-3">
+        <div className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Sorts files into folders by type (Images, Videos, Music, Documents, Code, Archives, Applications).</span></div>
+        {/* Source folder */}
+        <div>
+          <div className="text-[9px] font-bold mb-1" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>SOURCE FOLDER</span></div>
           <div className="flex gap-2 no-drag">
-            {[2,3,4].map(s=>(
-              <button key={s} onClick={()=>setUpscaleScale(s)}
-                style={upscaleScale===s&&tc?{background:tc.accent,color:'#000'}:tc?{background:tc.cardBg,borderColor:tc.cardBorder,color:tc.textMuted}:undefined}
-                className={cn('flex-1 py-2 rounded-xl text-[12px] font-bold border transition-all',
-                  !tc && (upscaleScale===s?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent'
-                                         :'bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.08] dark:border-white/[0.08] text-black/50 dark:text-white/50'))}>
-                x{s}
-              </button>
-            ))}
+            <input value={srcFolder} onChange={e=>setSrcFolder(e.target.value)} placeholder="C:\Users\...\Downloads" className={cn(inputCls,'flex-1')}/>
+            <button onClick={()=>pickFolder(setSrcFolder)}
+              style={tc?{background:'rgba(255,255,255,0.10)',color:tc.textPrimary,border:'none'}:undefined}
+              className={cn('px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap',!tc&&'bg-black/[0.08] dark:bg-white/[0.10] text-[#333] dark:text-[#ccc] border border-black/[0.08] dark:border-white/[0.10]')}>
+              Browse
+            </button>
           </div>
-          {img && <div className="text-[10px]" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Image loaded: {fileName}</span></div>}
-          <button onClick={doUpscale} disabled={!img||processing}
-            style={tc&&!(!img||processing)?{background:tc.accent,color:'#000'}:undefined}
-            className={cn('w-full py-2.5 rounded-xl text-[12px] font-bold transition-all',
-              !tc && 'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]',
-              (!img||processing)&&'opacity-40 cursor-not-allowed')}>
-            {processing ? '⏳ Processing...' : `🔍 Upscale x${upscaleScale} & Download`}
+        </div>
+        {/* Output folder */}
+        <div>
+          <div className="text-[9px] font-bold mb-1" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>OUTPUT FOLDER <span className="font-normal opacity-60">(optional — defaults to Sorted/ inside source)</span></span></div>
+          <div className="flex gap-2 no-drag">
+            <input value={outFolder} onChange={e=>setOutFolder(e.target.value)} placeholder="Leave empty for auto" className={cn(inputCls,'flex-1')}/>
+            <button onClick={()=>pickFolder(setOutFolder)}
+              style={tc?{background:'rgba(255,255,255,0.10)',color:tc.textPrimary,border:'none'}:undefined}
+              className={cn('px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap',!tc&&'bg-black/[0.08] dark:bg-white/[0.10] text-[#333] dark:text-[#ccc] border border-black/[0.08] dark:border-white/[0.10]')}>
+              Browse
+            </button>
+          </div>
+        </div>
+        {/* Mode */}
+        <div className="flex gap-2 no-drag">
+          {(['copy','move'] as const).map(m=>(
+            <button key={m} onClick={()=>setSortMode(m)}
+              style={sortMode===m?(tc?{background:tc.accent,color:'#000',border:'none'}:undefined):(tc?{background:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.10)',color:tc.textMuted}:undefined)}
+              className={cn('flex-1 py-1.5 rounded-xl text-[11px] font-semibold border transition-all',
+                !tc&&(sortMode===m?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a] border-transparent':'bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.08] dark:border-white/[0.08] text-black/50 dark:text-white/50'))}>
+              {m==='copy'?'📋 Copy':'✂️ Move'}
+            </button>
+          ))}
+        </div>
+        {/* Run */}
+        <button onClick={runSort} disabled={sortRunning}
+          style={!sortRunning&&tc?{background:tc.accent,color:'#000'}:undefined}
+          className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]',sortRunning&&'opacity-60 cursor-not-allowed')}>
+          {sortRunning?'⏳ Sorting files...':'📂 Sort Files Now'}
+        </button>
+        {sortStatus&&<div className="text-[11px] p-2.5 rounded-xl font-mono" style={tc?{background:'rgba(255,255,255,0.05)',color:tc.textMuted}:{background:'rgba(0,0,0,0.04)',color:'rgba(0,0,0,0.5)'}}>{sortStatus}</div>}
+        {/* Advanced CLI */}
+        <div style={panelBg}>
+          <div className="text-[10px] font-bold mb-1" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/50':''}>Full CLI (upscale + sort)</span></div>
+          <button onClick={launchCLI} style={tc?{background:'rgba(255,255,255,0.10)',color:tc.textPrimary}:undefined}
+            className={cn('w-full py-1.5 rounded-lg text-[10px] font-bold',!tc&&'bg-black/[0.06] dark:bg-white/[0.08] text-black/50 dark:text-white/50')}>
+            🖥 Launch image_upscaler.py in Terminal
           </button>
-          <div className="text-[9px] p-2.5 rounded-xl" style={tc?{background:'rgba(255,255,255,0.05)',color:tc.textMuted}:{background:'rgba(0,0,0,0.03)',color:'rgba(0,0,0,0.3)'}}>
-            💡 For advanced algorithms (Smart / Photo / Sharpen), run <code className="font-mono">python image_upscaler.py</code> from the image-tools-box CLI.
-          </div>
         </div>
-      )}
+      </div>}
 
-      {tab === 'sort' && (
-        <div className="flex flex-col gap-3">
-          <div className="text-[11px] leading-relaxed" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/50 dark:text-white/50':''}>File sorting organizes files by type into folders. This runs via the Python CLI tool bundled with JARVIS.</span></div>
-          <div className="rounded-xl p-3" style={tc?{background:'rgba(255,255,255,0.05)'}:{background:'rgba(0,0,0,0.03)'}}>
-            <div className="text-[10px] font-bold mb-2" style={{color:tc?tc.accent:undefined}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Supported Groups</span></div>
-            {[['🖼', 'Images','jpg png gif webp bmp'],['🎬','Videos','mp4 mkv avi mov'],['🎵','Music','mp3 flac wav aac'],['📄','Documents','pdf docx xlsx pptx'],['💻','Code','py js ts html css'],['📦','Archives','zip rar 7z tar']].map(([icon,name,exts])=>(
-              <div key={name} className="flex items-center gap-2 py-1 border-b last:border-0" style={tc?{borderColor:'rgba(255,255,255,0.06)'}:{borderColor:'rgba(0,0,0,0.05)'}}>
-                <span>{icon}</span>
-                <span className="text-[10px] font-semibold w-20" style={{color:tc?tc.textPrimary:undefined}}><span className={!tc?'text-[#333] dark:text-[#ccc]':''}>{name}</span></span>
-                <span className="text-[9px]" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/30 dark:text-white/30':''}>{exts}</span></span>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-xl p-3 font-mono text-[10px]" style={tc?{background:'rgba(0,0,0,0.3)',color:tc.textMuted}:{background:'rgba(0,0,0,0.05)',color:'rgba(0,0,0,0.5)'}}>
-            python image_upscaler.py
-          </div>
-          {sortResult && <div className="text-[11px] text-green-400">{sortResult}</div>}
-        </div>
-      )}
-
-      {tab !== 'edit' || !img ? null : null}
       <button onClick={onClose} style={tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
-        className={cn('mt-3 w-full py-2 rounded-xl text-[12px] font-semibold transition-colors',
-          !tc && 'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40 hover:bg-black/[0.07]')}>
+        className={cn('mt-3 w-full py-2 rounded-xl text-[12px] font-semibold transition-colors',!tc&&'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40 hover:bg-black/[0.07]')}>
         Close
       </button>
     </Modal>
   );
 }
+
 
 // ── Premium Modal ─────────────────────────────────────────────────────────────
 function PremiumModal({ open, onClose, t, tc }: { open:boolean; onClose:()=>void; t:I18n; tc:ThemeConfig|null }) {
@@ -644,10 +692,27 @@ export default function App() {
     <div
       className={cn('jarvis-root font-sans', bgClass)}
       style={appStyle}
-      onMouseDown={async (e) => {
+      onMouseDown={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest('.no-drag, button, input, textarea, select, a')) return;
-        try { (await getWin()).startDragging(); } catch {}
+        // Only start dragging after mouse moves (threshold), so clicks still fire
+        const startX = e.clientX;
+        const startY = e.clientY;
+        let dragging = false;
+        const onMove = async (me: MouseEvent) => {
+          if (!dragging && (Math.abs(me.clientX - startX) > 4 || Math.abs(me.clientY - startY) > 4)) {
+            dragging = true;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            try { const { Window } = await import('@tauri-apps/api/window'); (await Window.getCurrent()).startDragging(); } catch {}
+          }
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
       }}
     >
       {tc && <ArtistBackground theme={artistTheme!} />}
@@ -704,7 +769,7 @@ export default function App() {
         </div>
 
         {isDemo && <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-[10px] font-bold text-amber-700 dark:text-amber-400 text-center">{t.demoMode}</div>}
-        {tc && <div className="rounded-xl px-3 py-2 text-[10px] font-bold text-center border" style={{background:tc.bannerBg,borderColor:tc.bannerBorder,color:tc.bannerText}}>{tc.banner}</div>}
+
 
         {/* ═══ CPU + RAM ═══ */}
         <div className="grid grid-cols-2 gap-2">

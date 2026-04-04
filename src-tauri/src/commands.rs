@@ -274,3 +274,155 @@ pub fn system_action(action: String) -> Result<(), String> {
     }
     Ok(())
 }
+
+// ── Image Tools Box integration ───────────────────────────────────────────────
+
+#[tauri::command]
+pub fn open_image_tools_cli() -> Result<String, String> {
+    // Try to find python in common locations
+    let python_cmds = ["python", "python3", "py"];
+    let script_name = "image_upscaler.py";
+
+    // Look for the script next to the executable
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+
+    let search_paths: Vec<std::path::PathBuf> = [
+        exe_dir.clone().map(|d| d.join(script_name)),
+        exe_dir.clone().map(|d| d.join("resources").join(script_name)),
+        Some(std::path::PathBuf::from(script_name)),
+    ].into_iter().flatten().collect();
+
+    let script_path = search_paths.into_iter().find(|p| p.exists());
+
+    let script_str = match &script_path {
+        Some(p) => p.to_string_lossy().into_owned(),
+        None => return Err("image_upscaler.py not found. Place it next to JARVIS.exe".into()),
+    };
+
+    for py in python_cmds {
+        let result = std::process::Command::new(py)
+            .args(["--version"])
+            .output();
+        if result.is_ok() {
+            // Launch in a new terminal window
+            #[cfg(windows)]
+            std::process::Command::new("cmd")
+                .args(["/c", "start", "cmd", "/k", py, &script_str])
+                .spawn()
+                .map_err(|e| e.to_string())?;
+            #[cfg(not(windows))]
+            std::process::Command::new("bash")
+                .args(["-c", &format!("x-terminal-emulator -e {py} {script_str} || xterm -e {py} {script_str} || gnome-terminal -- {py} {script_str}")])
+                .spawn()
+                .map_err(|e| e.to_string())?;
+            return Ok(format!("Launched: {py} {script_str}"));
+        }
+    }
+    Err("Python not found. Install Python 3 and run: pip install opencv-python Pillow numpy".into())
+}
+
+#[tauri::command]
+pub fn check_python() -> String {
+    let cmds = ["python", "python3", "py"];
+    for py in cmds {
+        if let Ok(out) = std::process::Command::new(py).args(["--version"]).output() {
+            if out.status.success() {
+                return String::from_utf8_lossy(&out.stdout).trim().to_string();
+            }
+        }
+    }
+    "not_found".into()
+}
+
+#[tauri::command]
+pub fn open_folder_picker() -> Result<String, String> {
+    // Open a folder browser dialog via PowerShell on Windows
+    #[cfg(windows)]
+    {
+        let out = std::process::Command::new("powershell")
+            .args(["-Command",
+                "[System.Reflection.Assembly]::LoadWithPartialName('System.windows.forms') | Out-Null;\
+                $f = New-Object System.Windows.Forms.FolderBrowserDialog;\
+                $f.Description = 'Select folder';\
+                if($f.ShowDialog() -eq 'OK'){$f.SelectedPath}else{''}"])
+            .output()
+            .map_err(|e| e.to_string())?;
+        let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if path.is_empty() { return Err("cancelled".into()); }
+        return Ok(path);
+    }
+    #[cfg(not(windows))]
+    Err("folder_picker only supported on Windows currently".into())
+}
+
+#[tauri::command]
+pub fn sort_files(folder: String, output: String, mode: String) -> Result<String, String> {
+    use std::fs;
+    use std::collections::HashMap;
+
+    let src = std::path::Path::new(&folder);
+    let out_base = std::path::Path::new(&output);
+
+    if !src.exists() { return Err(format!("Folder not found: {folder}")); }
+
+    let ext_map: HashMap<&str, &str> = [
+        ("jpg","Images"),("jpeg","Images"),("png","Images"),("gif","Images"),
+        ("bmp","Images"),("webp","Images"),("tiff","Images"),("svg","Images"),("ico","Images"),
+        ("mp4","Videos"),("mkv","Videos"),("avi","Videos"),("mov","Videos"),
+        ("wmv","Videos"),("flv","Videos"),("webm","Videos"),
+        ("mp3","Music"),("flac","Music"),("wav","Music"),("aac","Music"),
+        ("ogg","Music"),("m4a","Music"),("wma","Music"),
+        ("pdf","Documents"),("doc","Documents"),("docx","Documents"),
+        ("xls","Documents"),("xlsx","Documents"),("ppt","Documents"),
+        ("pptx","Documents"),("txt","Documents"),("rtf","Documents"),("csv","Documents"),
+        ("py","Code"),("js","Code"),("ts","Code"),("html","Code"),("css","Code"),
+        ("json","Code"),("xml","Code"),("yaml","Code"),("yml","Code"),("sql","Code"),
+        ("rs","Code"),("go","Code"),("cpp","Code"),("c","Code"),("h","Code"),
+        ("zip","Archives"),("rar","Archives"),("7z","Archives"),("tar","Archives"),("gz","Archives"),
+        ("exe","Applications"),("msi","Applications"),("dmg","Applications"),("apk","Applications"),
+        ("ttf","Fonts"),("otf","Fonts"),("woff","Fonts"),
+    ].iter().cloned().collect();
+
+    let mut moved = 0u32;
+    let mut errors: Vec<String> = vec![];
+
+    let entries = fs::read_dir(src).map_err(|e| e.to_string())?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() { continue; }
+        let ext = path.extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .unwrap_or_default();
+        let group = ext_map.get(ext.as_str()).copied().unwrap_or("Other");
+        let dest_dir = out_base.join(group);
+        if let Err(e) = fs::create_dir_all(&dest_dir) {
+            errors.push(format!("{}: {e}", path.display())); continue;
+        }
+        let mut dest = dest_dir.join(path.file_name().unwrap());
+        let mut counter = 1u32;
+        while dest.exists() {
+            let stem = path.file_stem().and_then(|s|s.to_str()).unwrap_or("file");
+            let ext2 = path.extension().and_then(|e|e.to_str()).unwrap_or("");
+            dest = dest_dir.join(format!("{stem}_{counter}.{ext2}"));
+            counter += 1;
+        }
+        let result = if mode == "move" {
+            fs::rename(&path, &dest).or_else(|_| fs::copy(&path, &dest).map(|_|()).and_then(|_| fs::remove_file(&path)))
+        } else {
+            fs::copy(&path, &dest).map(|_|())
+        };
+        match result {
+            Ok(_) => moved += 1,
+            Err(e) => errors.push(format!("{}: {e}", path.display())),
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(format!("✅ {moved} files sorted into {}", out_base.display()))
+    } else {
+        Ok(format!("⚠️ {moved} sorted, {} errors: {}", errors.len(), errors.join("; ")))
+    }
+}
