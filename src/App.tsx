@@ -80,12 +80,12 @@ const THEME_CFG: Record<NonNullable<ArtistTheme>, ThemeConfig> = {
 
 // ── Artist Background — only photo + dark veil, zero decorations ─────────────
 function ArtistBackground({ theme, photo }: { theme: NonNullable<ArtistTheme>; photo: string }) {
-  const cfg = THEME_CFG[theme];
   return (
     <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0, borderRadius:'inherit' }}>
-      {/* The real photo, full cover */}
+      {/* key={photo} forces React to remount the img on every photo change → CSS fade-in plays */}
       <img
-        src={cfg.photo}
+        key={photo}
+        src={photo}
         alt=""
         draggable={false}
         style={{
@@ -99,10 +99,10 @@ function ArtistBackground({ theme, photo }: { theme: NonNullable<ArtistTheme>; p
           filter: 'brightness(0.70) saturate(1.0)',
           pointerEvents: 'none',
           userSelect: 'none',
-          transition: 'opacity 1.5s ease-in-out',
+          animation: 'photoFadeIn 1.5s ease-in-out forwards',
         }}
       />
-      {/* Single dark overlay so text stays readable — that's all */}
+      {/* Single dark overlay so text stays readable */}
       <div style={{
         position: 'absolute', inset: 0,
         background: 'rgba(0,0,0,0.28)',
@@ -666,29 +666,36 @@ export default function App() {
   const autoTheme: ArtistTheme = spotify.playing ? getArtistTheme(spotify.artist, spotify.track) : null;
   const artistTheme: ArtistTheme = settings.manualTheme !== 'none' ? settings.manualTheme : autoTheme;
 
-  // Photo rotation — cycles through theme photos every 60 seconds when enabled
+  // Photo rotation
   const ICARDI_PHOTOS  = [ICARDI_IMG, ICARDI_IMG2];
   const MADISON_PHOTOS = [MADISON_IMG, MADISON_IMG2];
-  const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(() => Math.floor(Math.random() * 2));
+  // keep a ref so the interval always reads the latest value without re-creating
+  const photoIndexRef = useRef(photoIndex);
+  photoIndexRef.current = photoIndex;
 
-  // Reset index when theme changes, pick random starting photo
+  // Reset to random photo when theme changes
   useEffect(() => {
     setPhotoIndex(Math.floor(Math.random() * 2));
   }, [artistTheme]);
 
-  // 60-second rotation interval (only when photoRotation is enabled)
+  // 60-second rotation — recreated whenever rotation toggle or theme changes
   useEffect(() => {
     if (!artistTheme || !settings.photoRotation) return;
+
+    // advance immediately after first 60s
     const id = setInterval(() => {
-      setPhotoIndex(i => (i + 1) % 2);
+      setPhotoIndex(prev => (prev + 1) % 2);
     }, 60_000);
+
     return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistTheme, settings.photoRotation]);
 
   const currentPhoto = artistTheme === 'icardi'
-    ? ICARDI_PHOTOS[photoIndex]
+    ? ICARDI_PHOTOS[photoIndex % ICARDI_PHOTOS.length]
     : artistTheme === 'madison'
-    ? MADISON_PHOTOS[photoIndex]
+    ? MADISON_PHOTOS[photoIndex % MADISON_PHOTOS.length]
     : '';
   const tc: ThemeConfig|null = artistTheme ? THEME_CFG[artistTheme] : null;
 
