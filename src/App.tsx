@@ -8,7 +8,7 @@ import { ChartModal } from '@/components/ChartModal';
 import { SpotifyPanel } from '@/components/SpotifyPanel';
 import { fmtSpeed, fmtTemp, fmtUptime, cn } from '@/lib/utils';
 import { ICARDI_IMG, ICARDI_IMG2 } from '@/assets/icardi';
-import { MADISON_IMG } from '@/assets/madison';
+import { MADISON_IMG, MADISON_IMG2 } from '@/assets/madison';
 
 type ModalType = 'chart' | 'spotify' | 'settings' | 'stats' | 'actions' | 'changelog' | 'notes' | 'premium' | 'worldclock' | 'imagetools' | null;
 type ChartKey = 'cpu' | 'ram' | 'gpu' | 'net' | 'disk';
@@ -99,6 +99,7 @@ function ArtistBackground({ theme, photo }: { theme: NonNullable<ArtistTheme>; p
           filter: 'brightness(0.70) saturate(1.0)',
           pointerEvents: 'none',
           userSelect: 'none',
+          transition: 'opacity 1.5s ease-in-out',
         }}
       />
       {/* Single dark overlay so text stays readable — that's all */}
@@ -665,13 +666,30 @@ export default function App() {
   const autoTheme: ArtistTheme = spotify.playing ? getArtistTheme(spotify.artist, spotify.track) : null;
   const artistTheme: ArtistTheme = settings.manualTheme !== 'none' ? settings.manualTheme : autoTheme;
 
-  // Randomise Icardi photo (pick one on mount, re-pick when theme activates)
-  const iciPhotoRef = useRef<string>(Math.random() < 0.5 ? ICARDI_IMG : ICARDI_IMG2);
+  // Photo rotation — cycles through theme photos every 60 seconds when enabled
+  const ICARDI_PHOTOS  = [ICARDI_IMG, ICARDI_IMG2];
+  const MADISON_PHOTOS = [MADISON_IMG, MADISON_IMG2];
+  const [photoIndex, setPhotoIndex] = useState(0);
+
+  // Reset index when theme changes, pick random starting photo
   useEffect(() => {
-    if (artistTheme === 'icardi') {
-      iciPhotoRef.current = Math.random() < 0.5 ? ICARDI_IMG : ICARDI_IMG2;
-    }
+    setPhotoIndex(Math.floor(Math.random() * 2));
   }, [artistTheme]);
+
+  // 60-second rotation interval (only when photoRotation is enabled)
+  useEffect(() => {
+    if (!artistTheme || !settings.photoRotation) return;
+    const id = setInterval(() => {
+      setPhotoIndex(i => (i + 1) % 2);
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [artistTheme, settings.photoRotation]);
+
+  const currentPhoto = artistTheme === 'icardi'
+    ? ICARDI_PHOTOS[photoIndex]
+    : artistTheme === 'madison'
+    ? MADISON_PHOTOS[photoIndex]
+    : '';
   const tc: ThemeConfig|null = artistTheme ? THEME_CFG[artistTheme] : null;
 
   useEffect(() => { document.documentElement.classList.toggle('dark', settings.darkTheme); }, [settings.darkTheme]);
@@ -727,7 +745,7 @@ export default function App() {
         document.addEventListener('mouseup', onUp);
       }}
     >
-      {tc && <ArtistBackground theme={artistTheme!} photo={artistTheme==='icardi' ? iciPhotoRef.current : THEME_CFG['madison'].photo} />}
+      {tc && <ArtistBackground theme={artistTheme!} photo={currentPhoto} />}
 
       {/* Scrollable content layer */}
       <div className="jarvis-scroll">
@@ -977,6 +995,21 @@ export default function App() {
                       {lbl}
                     </button>
                   ))}
+                </div>
+              )},
+              {label: settings.language==='tr'?'Foto Rotasyonu':'Photo Rotation', ctrl:(
+                <div className="flex items-center gap-2 no-drag">
+                  <span className="text-[9px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/30 dark:text-white/30':''}>1 dk</span></span>
+                  <div className="flex gap-1">
+                    {[true,false].map(v=>(
+                      <button key={String(v)} onClick={()=>updateSettings({photoRotation:v})}
+                        style={settings.photoRotation===v&&tc?{background:tc.accent,color:'#000'}:tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
+                        className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                          !tc&&(settings.photoRotation===v?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]':'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'))}>
+                        {v?(settings.language==='tr'?'Açık':'On'):(settings.language==='tr'?'Kapalı':'Off')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )},
             ].map(row=>(

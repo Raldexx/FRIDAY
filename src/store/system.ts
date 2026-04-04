@@ -357,11 +357,12 @@ export interface Settings {
   startWithWindows: boolean;
   tourSeen:         boolean;
   manualTheme:      'none' | 'madison' | 'icardi';
+  photoRotation:    boolean;
 }
 
 export function loadSettings(): Settings {
-  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
-  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none' }; }
+  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true }; }
 }
 
 export function saveSettings(s: Partial<Settings>) {
