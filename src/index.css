@@ -19,16 +19,60 @@
   }
 }
 
-* { -webkit-user-select: none; user-select: none; }
+/* ── Global ── */
+* { -webkit-user-select: none; user-select: none; box-sizing: border-box; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 99px; }
-.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); }
+/* Tauri frameless window: fix body so scrolling works correctly */
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;           /* outer body must NOT scroll */
+  border-radius: 18px;
+}
 
-/* Soft window corners */
-body { border-radius: 18px; overflow: hidden; }
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* The drag region covers everything EXCEPT .no-drag children */
+.jarvis-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* The scrollable inner area */
+.jarvis-scroll {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Custom scrollbar */
+.jarvis-scroll::-webkit-scrollbar { width: 3px; }
+.jarvis-scroll::-webkit-scrollbar-track { background: transparent; }
+.jarvis-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+.dark .jarvis-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+
+/* Modal scrollbars */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 99px; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
 
 /* Spotify */
 .text-spotify { color: #1DB954; }
@@ -38,20 +82,12 @@ body { border-radius: 18px; overflow: hidden; }
 @keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:.55} }
 .animate-pulse2 { animation: pulse2 1.4s ease-in-out infinite; }
 
-/* ── Artist theme animations ── */
-@keyframes twinkle {
-  0%,100% { opacity:0.15; transform:scale(1); }
-  50%      { opacity:0.4;  transform:scale(1.4); }
-}
+/* Artist theme animations */
 @keyframes drift {
-  0%,100% { transform:translateY(0px) rotate(-8deg); }
-  50%      { transform:translateY(-12px) rotate(8deg); }
+  0%,100% { transform: translateY(0px) rotate(-6deg); opacity: 0.18; }
+  50%      { transform: translateY(-14px) rotate(6deg); opacity: 0.28; }
 }
 @keyframes spark {
-  0%,100% { transform:scale(1); opacity:0.35; }
-  50%      { transform:scale(2.2); opacity:0.6; }
+  0%,100% { transform: scale(1); opacity: 0.3; }
+  50%      { transform: scale(2.5); opacity: 0.6; }
 }
-@keyframes float0 { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-10px) rotate(5deg)} }
-@keyframes float1 { 0%,100%{transform:translateY(0) rotate(3deg)} 50%{transform:translateY(-14px) rotate(-4deg)} }
-@keyframes float2 { 0%,100%{transform:translateY(0) rotate(-7deg)} 50%{transform:translateY(-8px) rotate(7deg)} }
-@keyframes float3 { 0%,100%{transform:translateY(0) rotate(5deg)} 50%{transform:translateY(-16px) rotate(-5deg)} }

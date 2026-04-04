@@ -46,7 +46,7 @@ const THEME_CFG: Record<NonNullable<ArtistTheme>, ThemeConfig> = {
     bg:             'linear-gradient(160deg,#0d0018 0%,#1a0030 45%,#2d0a1a 100%)',
     accent:         '#e879f9',
     accentSoft:     '#a21caf',
-    cardBg:         'rgba(45,10,60,0.78)',
+    cardBg:         'rgba(30,5,50,0.88)',
     cardBorder:     'rgba(232,121,249,0.18)',
     textPrimary:    '#f5d0fe',
     textMuted:      'rgba(245,208,254,0.50)',
@@ -62,7 +62,7 @@ const THEME_CFG: Record<NonNullable<ArtistTheme>, ThemeConfig> = {
     bg:             'linear-gradient(160deg,#0a0000 0%,#1f0400 38%,#2e0c00 70%,#1a0900 100%)',
     accent:         '#fbbf24',
     accentSoft:     '#dc2626',
-    cardBg:         'rgba(38,8,0,0.82)',
+    cardBg:         'rgba(25,5,0,0.90)',
     cardBorder:     'rgba(251,191,36,0.22)',
     textPrimary:    '#fef3c7',
     textMuted:      'rgba(254,243,199,0.50)',
@@ -80,46 +80,78 @@ const THEME_CFG: Record<NonNullable<ArtistTheme>, ThemeConfig> = {
 function ArtistBackground({ theme }: { theme: NonNullable<ArtistTheme> }) {
   const cfg = THEME_CFG[theme];
   return (
-    <div style={{ position:'fixed', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0 }}>
-      {/* Real photo — bottom-right, faded */}
-      <div style={{
-        position:'absolute', right:0, bottom:0,
-        width:'65%', height:'100%',
-        backgroundImage:`url(${cfg.photo})`,
-        backgroundSize:'cover',
-        backgroundPosition: theme === 'icardi' ? 'center top' : 'center center',
-        maskImage:'linear-gradient(to left, rgba(0,0,0,0.35) 0%, transparent 90%), linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)',
-        WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.35) 0%, transparent 90%), linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)',
-        filter:'saturate(1.1)',
-        opacity: 0.45,
-      }} />
-      {/* Colour glow overlay */}
+    <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:0, borderRadius:'inherit' }}>
+
+      {/* Full-cover photo layer — no mask, just opacity + gradient overlay on top */}
+      <img
+        src={cfg.photo}
+        alt=""
+        style={{
+          position:'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: theme === 'icardi' ? 'center 20%' : 'center center',
+          opacity: 0.30,
+          filter: theme === 'icardi' ? 'saturate(1.3) brightness(0.85)' : 'saturate(1.1) brightness(0.80)',
+        }}
+      />
+
+      {/* Dark gradient on top so cards remain readable */}
       <div style={{
         position:'absolute', inset:0,
         background: theme === 'icardi'
-          ? 'radial-gradient(ellipse at 80% 80%, rgba(220,38,38,0.20) 0%, transparent 60%)'
-          : 'radial-gradient(ellipse at 75% 65%, rgba(232,121,249,0.18) 0%, transparent 65%)',
+          ? 'linear-gradient(160deg, rgba(10,0,0,0.82) 0%, rgba(30,5,0,0.60) 50%, rgba(10,0,0,0.45) 100%)'
+          : 'linear-gradient(160deg, rgba(13,0,24,0.85) 0%, rgba(26,0,48,0.62) 50%, rgba(45,10,26,0.45) 100%)',
         pointerEvents:'none',
       }} />
-      {/* Theme-specific decorations */}
-      {theme === 'madison' && <>
-        {['♪','♫','♩','♬'].map((n,i) => (
-          <div key={i} style={{ position:'absolute', right:`${28+i*25}px`, top:`${90+i*65}px`,
-            fontSize:`${15+i*3}px`, color:'rgba(232,121,249,0.22)',
-            animation:`drift ${4+i}s ease-in-out infinite`, animationDelay:`${i*0.7}s` }}>{n}</div>
-        ))}
-      </>}
+
+      {/* Accent glow */}
+      <div style={{
+        position:'absolute', inset:0,
+        background: theme === 'icardi'
+          ? 'radial-gradient(ellipse at 75% 85%, rgba(220,38,38,0.18) 0%, transparent 55%)'
+          : 'radial-gradient(ellipse at 70% 70%, rgba(232,121,249,0.15) 0%, transparent 55%)',
+        pointerEvents:'none',
+      }} />
+
+      {/* Madison: floating music notes */}
+      {theme === 'madison' && ['♪','♫','♩','♬'].map((n,i) => (
+        <div key={i} style={{
+          position:'absolute', right:`${24+i*22}px`, top:`${80+i*60}px`,
+          fontSize:`${14+i*3}px`, color:'rgba(232,121,249,0.28)',
+          animation:`drift ${3.5+i*0.8}s ease-in-out infinite`,
+          animationDelay:`${i*0.6}s`,
+          pointerEvents:'none',
+        }}>{n}</div>
+      ))}
+
+      {/* Icardi: Galatasaray badge + 99 watermark */}
       {theme === 'icardi' && <>
-        {/* #99 big watermark */}
-        <div style={{ position:'absolute', right:'-5px', bottom:'30px',
-          fontSize:'160px', fontWeight:'900', fontStyle:'italic',
-          color:'rgba(251,191,36,0.06)', lineHeight:1, fontFamily:'Georgia,serif', userSelect:'none' }}>99</div>
-        {/* Galatasaray crest */}
-        <svg viewBox="0 0 100 110" style={{ position:'absolute', right:'12px', top:'12px', width:'44px', height:'50px', opacity:0.13 }}>
+        <div style={{
+          position:'absolute', right:'10px', bottom:'24px',
+          fontSize:'180px', fontWeight:'900', fontStyle:'italic',
+          color:'rgba(251,191,36,0.07)', lineHeight:1,
+          fontFamily:'Georgia,serif', userSelect:'none', pointerEvents:'none',
+        }}>99</div>
+        <svg viewBox="0 0 100 110" style={{ position:'absolute', right:'12px', top:'14px', width:'46px', height:'52px', opacity:0.16, pointerEvents:'none' }}>
           <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" fill="#dc2626"/>
           <path d="M50 4 L92 18 L92 58 Q92 85 50 104 Q8 85 8 58 L8 18 Z" stroke="#fbbf24" strokeWidth="3.5" fill="none"/>
           <text x="50" y="70" textAnchor="middle" fontSize="36" fontWeight="900" fill="#fbbf24" fontFamily="serif">G</text>
         </svg>
+        {/* Spark dots */}
+        {Array(8).fill(0).map((_,i)=>(
+          <div key={i} style={{
+            position:'absolute',
+            right:`${18+(i*23)%75}px`, bottom:`${35+(i*37)%200}px`,
+            width:`${2+i%2}px`, height:`${2+i%2}px`, borderRadius:'50%',
+            background: i%2===0 ? 'rgba(251,191,36,0.45)' : 'rgba(220,38,38,0.45)',
+            animation:`spark ${1.4+i*0.25}s ease-in-out infinite`,
+            animationDelay:`${i*0.18}s`,
+            pointerEvents:'none',
+          }}/>
+        ))}
       </>}
     </div>
   );
@@ -609,11 +641,19 @@ export default function App() {
   const clickCardCls = cn(cardCls, 'cursor-pointer', !tc&&'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]', tc&&'hover:opacity-90');
 
   return (
-    <div className={cn('w-full min-h-screen font-sans relative', bgClass)} style={appStyle}>
+    <div
+      className={cn('jarvis-root font-sans', bgClass)}
+      style={appStyle}
+      onMouseDown={async (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.no-drag, button, input, textarea, select, a')) return;
+        try { (await getWin()).startDragging(); } catch {}
+      }}
+    >
       {tc && <ArtistBackground theme={artistTheme!} />}
 
-      {/* Scrollable content */}
-      <div className="relative overflow-y-auto" style={{ zIndex:1, padding:'12px', display:'flex', flexDirection:'column', gap:'8px', minHeight:'100vh' }}>
+      {/* Scrollable content layer */}
+      <div className="jarvis-scroll">
 
         {/* ═══ HEADER ═══ */}
         <div style={cardStyle()} className={cn(cardCls,'flex items-center justify-between px-4 py-3.5')}>
