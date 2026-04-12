@@ -1,4 +1,4 @@
-# ⚡ JARVIS v3 — System Monitor
+# ⚡ F.R.I.D.A.Y. — System Monitor
 
 > A clean, modern desktop system monitor built with **Tauri 2 + React + TypeScript + Rust**
 
