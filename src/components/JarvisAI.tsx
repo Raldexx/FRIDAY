@@ -45,13 +45,7 @@ async function tauriOpen(url: string): Promise<boolean> {
     await invoke('open_url', { url });
     return true;
   } catch {
-    try {
-      const { open } = await import('@tauri-apps/plugin-opener');
-      await open(url);
-      return true;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
