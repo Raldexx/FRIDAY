@@ -383,6 +383,7 @@ export const TRANSLATIONS: Record<Language, I18n> = {
       },
     ],
   },
+};
 
 export interface I18n {
   systemMonitor: string;
