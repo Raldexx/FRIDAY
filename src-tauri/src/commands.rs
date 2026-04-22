@@ -3,10 +3,6 @@ use sysinfo::{Components, Disks, Networks, System, ProcessesToUpdate};
 use std::sync::Mutex;
 
 // ── Persistent System instance ────────────────────────────────────────────────
-// sysinfo calculates CPU% as a delta between two refresh() calls.
-// Creating a new System every call = no delta = garbage CPU readings.
-// We keep one instance alive in a Mutex and only refresh it.
-
 struct SysState {
     sys: System,
 }
@@ -75,13 +71,8 @@ pub struct SpotifyInfo {
 
 #[tauri::command]
 pub fn get_system_stats() -> SystemStats {
-    // First refresh — prime the CPU counter
     with_sys(|sys| { sys.refresh_cpu_usage(); sys.refresh_memory(); });
-
-    // Wait so the delta window is meaningful
     std::thread::sleep(std::time::Duration::from_millis(200));
-
-    // Second refresh — now CPU% is accurate
     with_sys(|sys| {
         sys.refresh_cpu_usage();
         sys.refresh_memory();
@@ -104,7 +95,7 @@ pub fn get_system_stats() -> SystemStats {
 
         let components = Components::new_with_refreshed_list();
         let cpu_temp: Option<f32> = components.iter()
-            .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") })
+            .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") || l.contains("tdie") })
             .and_then(|c| c.temperature());
         let gpu_temp: Option<f32> = components.iter()
             .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
@@ -131,8 +122,8 @@ pub fn get_network_stats() -> NetworkStats {
 
 #[tauri::command]
 pub fn get_processes() -> Vec<ProcessInfo> {
-    // System/host processes to exclude
-    let exclude: &[&str] = &[
+    // Windows-specific host processes to exclude
+    let exclude_windows: &[&str] = &[
         "msedgewebview2.exe", "RuntimeBroker.exe", "svchost.exe",
         "SearchHost.exe", "SearchIndexer.exe", "WmiPrvSE.exe",
         "audiodg.exe", "dwm.exe", "csrss.exe", "lsass.exe",
@@ -143,62 +134,73 @@ pub fn get_processes() -> Vec<ProcessInfo> {
         "ctfmon.exe", "sihost.exe", "ShellExperienceHost.exe",
         "StartMenuExperienceHost.exe", "TextInputHost.exe",
     ];
+    // macOS/Linux kernel & system processes to exclude
+    let exclude_unix: &[&str] = &[
+        "kernel_task", "launchd", "kextd", "notifyd", "configd",
+        "diskarbitrationd", "systemd", "kworker", "ksoftirqd",
+        "migration", "rcu_", "irq/", "scsi_", "[kthread]",
+    ];
 
     with_sys(|sys| {
         sys.refresh_processes(ProcessesToUpdate::All, true);
         let ram_total = sys.total_memory() as f32;
         let mut procs: Vec<ProcessInfo> = sys.processes().values()
             .filter(|p| {
-                let name = p.name().to_string_lossy().to_lowercase();
-                // Must use >0.1% CPU or >0.5% memory
-                let cpu = p.cpu_usage();
-                let mem = if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 };
-                if cpu < 0.05 && mem < 0.3 { return false; }
-                // Exclude system processes
-                let name_orig = p.name().to_string_lossy();
-                if exclude.iter().any(|e| name_orig.eq_ignore_ascii_case(e)) { return false; }
-                // Exclude Windows host process patterns
-                if name.starts_with("runtime") && name.contains("broker") { return false; }
-                if name == "system" || name == "registry" || name == "idle" { return false; }
-                true
+                let name = p.name().to_string_lossy();
+                // Exclude Windows noise on Windows, Unix noise on Unix
+                #[cfg(target_os = "windows")]
+                let excluded = exclude_windows.contains(&name.as_ref());
+                #[cfg(not(target_os = "windows"))]
+                let excluded = exclude_unix.iter().any(|e| name.starts_with(e));
+                !excluded && p.cpu_usage() > 0.0
             })
             .map(|p| ProcessInfo {
-                name:        p.name().to_string_lossy().into_owned(),
+                name:        p.name().to_string_lossy().to_string(),
                 cpu_percent: p.cpu_usage(),
                 mem_percent: if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 },
                 pid:         p.pid().as_u32(),
-            }).collect();
-        procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap());
-        procs.truncate(6);
+            })
+            .collect();
+        procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap_or(std::cmp::Ordering::Equal));
+        procs.truncate(10);
         procs
     })
 }
 
-#[tauri::command]
-pub async fn get_weather() -> String {
-    match reqwest::get("https://wttr.in/?format=%t+%C").await {
-        Ok(r) => r.text().await.unwrap_or_else(|_| "Offline".into()),
-        Err(_) => "Offline".into(),
-    }
-}
+// ── Spotify / Now Playing ─────────────────────────────────────────────────────
 
 #[tauri::command]
 pub fn get_spotify() -> SpotifyInfo {
     #[cfg(target_os = "windows")]
-    if let Some(title) = find_spotify_title() {
-        if title.contains(" - ") {
-            let mut p = title.splitn(2, " - ");
-            let artist = p.next().unwrap_or("").trim().to_string();
-            let track  = p.next().unwrap_or("").trim().to_string();
-            return SpotifyInfo { playing: true, track, artist };
-        }
-        return SpotifyInfo { playing: true, track: title, artist: "Unknown".into() };
+    if let Some(title) = find_spotify_title_windows() {
+        return parse_spotify_title(title);
     }
+
+    #[cfg(target_os = "macos")]
+    if let Some(title) = find_spotify_title_macos() {
+        return parse_spotify_title(title);
+    }
+
+    #[cfg(target_os = "linux")]
+    if let Some(title) = find_spotify_title_linux() {
+        return parse_spotify_title(title);
+    }
+
     SpotifyInfo { playing: false, track: String::new(), artist: String::new() }
 }
 
+fn parse_spotify_title(title: String) -> SpotifyInfo {
+    if title.contains(" - ") {
+        let mut p = title.splitn(2, " - ");
+        let artist = p.next().unwrap_or("").trim().to_string();
+        let track  = p.next().unwrap_or("").trim().to_string();
+        return SpotifyInfo { playing: true, track, artist };
+    }
+    SpotifyInfo { playing: true, track: title, artist: "Unknown".into() }
+}
+
 #[cfg(target_os = "windows")]
-fn find_spotify_title() -> Option<String> {
+fn find_spotify_title_windows() -> Option<String> {
     use std::ptr;
     use winapi::shared::minwindef::{BOOL, LPARAM};
     use winapi::shared::windef::HWND;
@@ -233,6 +235,71 @@ fn find_spotify_title() -> Option<String> {
     unsafe { RESULT = None; EnumWindows(Some(cb), 0); RESULT.clone() }
 }
 
+/// macOS: query Spotify via AppleScript
+#[cfg(target_os = "macos")]
+fn find_spotify_title_macos() -> Option<String> {
+    let out = std::process::Command::new("osascript")
+        .args([
+            "-e",
+            r#"tell application "Spotify"
+                 if player state is playing then
+                   set t to name of current track
+                   set a to artist of current track
+                   return a & " - " & t
+                 end if
+               end tell"#,
+        ])
+        .output()
+        .ok()?;
+    if !out.status.success() { return None; }
+    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if s.is_empty() { None } else { Some(s) }
+}
+
+/// Linux: query Spotify via D-Bus (playerctl preferred, falls back to dbus-send)
+#[cfg(target_os = "linux")]
+fn find_spotify_title_linux() -> Option<String> {
+    // Try playerctl first (most distros have it or it's one apt install away)
+    if let Ok(out) = std::process::Command::new("playerctl")
+        .args(["--player=spotify", "metadata", "--format", "{{artist}} - {{title}}"])
+        .output()
+    {
+        if out.status.success() {
+            let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !s.is_empty() && s != " - " { return Some(s); }
+        }
+    }
+    // Fallback: dbus-send
+    let out = std::process::Command::new("dbus-send")
+        .args([
+            "--print-reply", "--dest=org.mpris.MediaPlayer2.spotify",
+            "/org/mpris/MediaPlayer2",
+            "org.freedesktop.DBus.Properties.Get",
+            "string:org.mpris.MediaPlayer2.Player",
+            "string:Metadata",
+        ])
+        .output()
+        .ok()?;
+    if !out.status.success() { return None; }
+    // Parse the dbus-send output for xesam:title and xesam:artist
+    let raw = String::from_utf8_lossy(&out.stdout);
+    let title = raw.lines()
+        .skip_while(|l| !l.contains("xesam:title"))
+        .nth(1)
+        .and_then(|l| { let s = l.trim().trim_matches('"'); if s.is_empty() { None } else { Some(s.to_string()) } });
+    let artist = raw.lines()
+        .skip_while(|l| !l.contains("xesam:artist"))
+        .find(|l| l.contains("string"))
+        .and_then(|l| { let s = l.trim().trim_matches('"'); if s.is_empty() { None } else { Some(s.to_string()) } });
+    match (artist, title) {
+        (Some(a), Some(t)) => Some(format!("{a} - {t}")),
+        (None, Some(t))    => Some(t),
+        _                  => None,
+    }
+}
+
+// ── System Info ───────────────────────────────────────────────────────────────
+
 #[derive(Serialize)]
 pub struct SystemInfo {
     pub cpu_name:    String,
@@ -251,39 +318,70 @@ pub fn get_system_info() -> SystemInfo {
     let cpu_name = sys.cpus().first()
         .map(|c| c.brand().trim().to_string())
         .unwrap_or_else(|| "Unknown CPU".into());
-
-    let cpu_cores = sys.cpus().len();
+    let cpu_cores    = sys.cpus().len();
     let ram_total_gb = sys.total_memory() as f64 / 1_073_741_824.0;
-
-    let os_name    = System::name().unwrap_or_else(|| "Unknown".into());
-    let os_version = System::os_version().unwrap_or_else(|| "".into());
-    let hostname   = System::host_name().unwrap_or_else(|| "Unknown".into());
+    let os_name      = System::name().unwrap_or_else(|| "Unknown".into());
+    let os_version   = System::os_version().unwrap_or_else(|| "".into());
+    let hostname     = System::host_name().unwrap_or_else(|| "Unknown".into());
 
     SystemInfo { cpu_name, cpu_cores, os_name, os_version, hostname, ram_total_gb }
 }
 
+// ── System Actions ────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub fn system_action(action: String) -> Result<(), String> {
     match action.as_str() {
-        "restart"  => { #[cfg(windows)] std::process::Command::new("shutdown").args(["/r","/t","1"]).spawn().ok(); }
-        "shutdown" => { #[cfg(windows)] std::process::Command::new("shutdown").args(["/s","/t","1"]).spawn().ok(); }
-        "sleep"    => { #[cfg(windows)] std::process::Command::new("rundll32.exe").args(["powrprof.dll,SetSuspendState","0,1,0"]).spawn().ok(); }
-        "taskmgr"  => { #[cfg(windows)] std::process::Command::new("taskmgr").spawn().ok(); }
-        _ => return Err(format!("Unknown: {action}")),
+        "restart" => {
+            #[cfg(target_os = "windows")]
+            std::process::Command::new("shutdown").args(["/r", "/t", "1"]).spawn().ok();
+            #[cfg(target_os = "macos")]
+            std::process::Command::new("osascript").args(["-e", "tell app \"System Events\" to restart"]).spawn().ok();
+            #[cfg(target_os = "linux")]
+            std::process::Command::new("systemctl").arg("reboot").spawn()
+                .or_else(|_| std::process::Command::new("reboot").spawn()).ok();
+        }
+        "shutdown" => {
+            #[cfg(target_os = "windows")]
+            std::process::Command::new("shutdown").args(["/s", "/t", "1"]).spawn().ok();
+            #[cfg(target_os = "macos")]
+            std::process::Command::new("osascript").args(["-e", "tell app \"System Events\" to shut down"]).spawn().ok();
+            #[cfg(target_os = "linux")]
+            std::process::Command::new("systemctl").arg("poweroff").spawn()
+                .or_else(|_| std::process::Command::new("poweroff").spawn()).ok();
+        }
+        "sleep" => {
+            #[cfg(target_os = "windows")]
+            std::process::Command::new("rundll32.exe").args(["powrprof.dll,SetSuspendState", "0,1,0"]).spawn().ok();
+            #[cfg(target_os = "macos")]
+            std::process::Command::new("pmset").arg("sleepnow").spawn().ok();
+            #[cfg(target_os = "linux")]
+            std::process::Command::new("systemctl").arg("suspend").spawn()
+                .or_else(|_| std::process::Command::new("sh").args(["-c", "echo mem > /sys/power/state"]).spawn()).ok();
+        }
+        "taskmgr" => {
+            #[cfg(target_os = "windows")]
+            std::process::Command::new("taskmgr").spawn().ok();
+            #[cfg(target_os = "macos")]
+            std::process::Command::new("open").args(["-a", "Activity Monitor"]).spawn().ok();
+            #[cfg(target_os = "linux")]
+            // Try common task managers in order of preference
+            for tm in &["gnome-system-monitor", "xfce4-taskmanager", "ksysguard", "htop"] {
+                if std::process::Command::new(tm).spawn().is_ok() { break; }
+            }
+        }
+        _ => return Err(format!("Unknown action: {action}")),
     }
     Ok(())
 }
 
-// ── Image Tools Box integration ───────────────────────────────────────────────
+// ── Image Tools ───────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub fn open_image_tools_cli() -> Result<String, String> {
-    // Try to find python in common locations
-    let python_cmds = ["python", "python3", "py"];
+    let python_cmds = ["python3", "python", "py"];
     let script_name = "image_upscaler.py";
 
-    // Look for the script next to the executable
     let exe_dir = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()));
@@ -295,28 +393,45 @@ pub fn open_image_tools_cli() -> Result<String, String> {
     ].into_iter().flatten().collect();
 
     let script_path = search_paths.into_iter().find(|p| p.exists());
-
     let script_str = match &script_path {
         Some(p) => p.to_string_lossy().into_owned(),
-        None => return Err("image_upscaler.py not found. Place it next to JARVIS.exe".into()),
+        None => return Err("image_upscaler.py not found. Place it next to the FRIDAY executable.".into()),
     };
 
     for py in python_cmds {
-        let result = std::process::Command::new(py)
-            .args(["--version"])
-            .output();
-        if result.is_ok() {
-            // Launch in a new terminal window
-            #[cfg(windows)]
+        if std::process::Command::new(py).arg("--version").output().is_ok() {
+            #[cfg(target_os = "windows")]
             std::process::Command::new("cmd")
                 .args(["/c", "start", "cmd", "/k", py, &script_str])
                 .spawn()
                 .map_err(|e| e.to_string())?;
-            #[cfg(not(windows))]
-            std::process::Command::new("bash")
-                .args(["-c", &format!("x-terminal-emulator -e {py} {script_str} || xterm -e {py} {script_str} || gnome-terminal -- {py} {script_str}")])
+
+            #[cfg(target_os = "macos")]
+            std::process::Command::new("osascript")
+                .args(["-e", &format!(
+                    "tell application \"Terminal\" to do script \"{py} {script_str}\""
+                )])
                 .spawn()
                 .map_err(|e| e.to_string())?;
+
+            #[cfg(target_os = "linux")]
+            {
+                // Try terminals in order of preference
+                let launched = ["x-terminal-emulator", "gnome-terminal", "xfce4-terminal", "konsole", "xterm"]
+                    .iter()
+                    .find_map(|term| {
+                        let args: Vec<&str> = if *term == "gnome-terminal" || *term == "xfce4-terminal" {
+                            vec!["--", py, &script_str]
+                        } else {
+                            vec!["-e", &format!("{py} {script_str}")]
+                        };
+                        std::process::Command::new(term).args(&args).spawn().ok()
+                    });
+                if launched.is_none() {
+                    return Err("No terminal emulator found. Install gnome-terminal, xterm, or konsole.".into());
+                }
+            }
+
             return Ok(format!("Launched: {py} {script_str}"));
         }
     }
@@ -325,8 +440,7 @@ pub fn open_image_tools_cli() -> Result<String, String> {
 
 #[tauri::command]
 pub fn check_python() -> String {
-    let cmds = ["python", "python3", "py"];
-    for py in cmds {
+    for py in ["python3", "python", "py"] {
         if let Ok(out) = std::process::Command::new(py).args(["--version"]).output() {
             if out.status.success() {
                 return String::from_utf8_lossy(&out.stdout).trim().to_string();
@@ -336,10 +450,11 @@ pub fn check_python() -> String {
     "not_found".into()
 }
 
+// ── Folder Picker ─────────────────────────────────────────────────────────────
+
 #[tauri::command]
 pub fn open_folder_picker() -> Result<String, String> {
-    // Open a folder browser dialog via PowerShell on Windows
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     {
         let out = std::process::Command::new("powershell")
             .args(["-Command",
@@ -353,9 +468,39 @@ pub fn open_folder_picker() -> Result<String, String> {
         if path.is_empty() { return Err("cancelled".into()); }
         return Ok(path);
     }
-    #[cfg(not(windows))]
-    Err("folder_picker only supported on Windows currently".into())
+
+    #[cfg(target_os = "macos")]
+    {
+        let out = std::process::Command::new("osascript")
+            .args(["-e", "POSIX path of (choose folder with prompt \"Select folder\")"])
+            .output()
+            .map_err(|e| e.to_string())?;
+        if !out.status.success() { return Err("cancelled".into()); }
+        let path = String::from_utf8_lossy(&out.stdout).trim().trim_end_matches('/').to_string();
+        if path.is_empty() { return Err("cancelled".into()); }
+        return Ok(path);
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Try zenity, then kdialog, then yad
+        for (cmd, args) in &[
+            ("zenity",  vec!["--file-selection", "--directory", "--title=Select folder"]),
+            ("kdialog", vec!["--getexistingdirectory", "."]),
+            ("yad",     vec!["--file", "--directory"]),
+        ] {
+            if let Ok(out) = std::process::Command::new(cmd).args(args).output() {
+                if out.status.success() {
+                    let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                    if !path.is_empty() { return Ok(path); }
+                }
+            }
+        }
+        return Err("No folder picker found. Install zenity (GNOME) or kdialog (KDE).".into());
+    }
 }
+
+// ── File Sorter ───────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub fn sort_files(folder: String, output: String, mode: String) -> Result<String, String> {
@@ -404,18 +549,18 @@ pub fn sort_files(folder: String, output: String, mode: String) -> Result<String
         let mut dest = dest_dir.join(path.file_name().unwrap());
         let mut counter = 1u32;
         while dest.exists() {
-            let stem = path.file_stem().and_then(|s|s.to_str()).unwrap_or("file");
-            let ext2 = path.extension().and_then(|e|e.to_str()).unwrap_or("");
+            let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
+            let ext2 = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             dest = dest_dir.join(format!("{stem}_{counter}.{ext2}"));
             counter += 1;
         }
         let result = if mode == "move" {
-            fs::rename(&path, &dest).or_else(|_| fs::copy(&path, &dest).map(|_|()).and_then(|_| fs::remove_file(&path)))
+            fs::rename(&path, &dest).or_else(|_| fs::copy(&path, &dest).map(|_| ()).and_then(|_| fs::remove_file(&path)))
         } else {
-            fs::copy(&path, &dest).map(|_|())
+            fs::copy(&path, &dest).map(|_| ())
         };
         match result {
-            Ok(_) => moved += 1,
+            Ok(_)  => moved += 1,
             Err(e) => errors.push(format!("{}: {e}", path.display())),
         }
     }
@@ -427,69 +572,48 @@ pub fn sort_files(folder: String, output: String, mode: String) -> Result<String
     }
 }
 
-// ── F.R.I.D.A.Y. System Control Commands ─────────────────────────────────────
+// ── URL / Process / Shell ─────────────────────────────────────────────────────
 
-/// Open a URL or protocol link using the OS default handler
 #[tauri::command]
 pub fn open_url(url: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", &url])
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
+    std::process::Command::new("cmd").args(["/c", "start", "", &url]).spawn().map_err(|e| e.to_string())?;
     #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&url)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
+    std::process::Command::new("open").arg(&url).spawn().map_err(|e| e.to_string())?;
     #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&url)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
+    std::process::Command::new("xdg-open").arg(&url).spawn().map_err(|e| e.to_string())?;
     Ok(format!("Opened: {url}"))
 }
 
-/// Kill a process by name (Windows: taskkill, Linux/Mac: pkill)
 #[tauri::command]
 pub fn kill_process(name: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
-        let out = std::process::Command::new("taskkill")
-            .args(["/F", "/IM", &name])
-            .output()
-            .map_err(|e| e.to_string())?;
+        let out = std::process::Command::new("taskkill").args(["/F", "/IM", &name]).output().map_err(|e| e.to_string())?;
         return Ok(String::from_utf8_lossy(&out.stdout).to_string());
     }
     #[cfg(not(target_os = "windows"))]
     {
-        let out = std::process::Command::new("pkill")
-            .arg("-f")
-            .arg(&name)
-            .output()
-            .map_err(|e| e.to_string())?;
+        let out = std::process::Command::new("pkill").arg("-f").arg(&name).output().map_err(|e| e.to_string())?;
         return Ok(String::from_utf8_lossy(&out.stdout).to_string());
     }
 }
 
-/// Run an arbitrary shell command (use with care — only called from trusted UI)
 #[tauri::command]
 pub fn run_command(command: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
-    let out = std::process::Command::new("cmd")
-        .args(["/c", &command])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let out = std::process::Command::new("cmd").args(["/c", &command]).output().map_err(|e| e.to_string())?;
     #[cfg(not(target_os = "windows"))]
-    let out = std::process::Command::new("sh")
-        .args(["-c", &command])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let out = std::process::Command::new("sh").args(["-c", &command]).output().map_err(|e| e.to_string())?;
     Ok(String::from_utf8_lossy(&out.stdout).to_string())
+}
+
+// ── Weather ───────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn get_weather() -> String {
+    match reqwest::get("https://wttr.in/?format=%t+%C").await {
+        Ok(r) => r.text().await.unwrap_or_else(|_| "Offline".into()),
+        Err(_) => "Offline".into(),
+    }
 }
