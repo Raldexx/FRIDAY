@@ -122,37 +122,37 @@ pub fn get_network_stats() -> NetworkStats {
 
 #[tauri::command]
 pub fn get_processes() -> Vec<ProcessInfo> {
-    // Windows-specific host processes to exclude
-    let exclude_windows: &[&str] = &[
-        "msedgewebview2.exe", "RuntimeBroker.exe", "svchost.exe",
-        "SearchHost.exe", "SearchIndexer.exe", "WmiPrvSE.exe",
-        "audiodg.exe", "dwm.exe", "csrss.exe", "lsass.exe",
-        "services.exe", "smss.exe", "wininit.exe", "winlogon.exe",
-        "System", "Registry", "Idle", "conhost.exe", "fontdrvhost.exe",
-        "MsMpEng.exe", "NisSrv.exe", "SecurityHealthService.exe",
-        "spoolsv.exe", "msdtc.exe", "dllhost.exe", "taskhostw.exe",
-        "ctfmon.exe", "sihost.exe", "ShellExperienceHost.exe",
-        "StartMenuExperienceHost.exe", "TextInputHost.exe",
-    ];
-    // macOS/Linux kernel & system processes to exclude
-    let exclude_unix: &[&str] = &[
-        "kernel_task", "launchd", "kextd", "notifyd", "configd",
-        "diskarbitrationd", "systemd", "kworker", "ksoftirqd",
-        "migration", "rcu_", "irq/", "scsi_", "[kthread]",
-    ];
-
     with_sys(|sys| {
         sys.refresh_processes(ProcessesToUpdate::All, true);
         let ram_total = sys.total_memory() as f32;
         let mut procs: Vec<ProcessInfo> = sys.processes().values()
             .filter(|p| {
                 let name = p.name().to_string_lossy();
-                // Exclude Windows noise on Windows, Unix noise on Unix
                 #[cfg(target_os = "windows")]
-                let excluded = exclude_windows.contains(&name.as_ref());
+                {
+                    let exclude: &[&str] = &[
+                        "msedgewebview2.exe", "RuntimeBroker.exe", "svchost.exe",
+                        "SearchHost.exe", "SearchIndexer.exe", "WmiPrvSE.exe",
+                        "audiodg.exe", "dwm.exe", "csrss.exe", "lsass.exe",
+                        "services.exe", "smss.exe", "wininit.exe", "winlogon.exe",
+                        "System", "Registry", "Idle", "conhost.exe", "fontdrvhost.exe",
+                        "MsMpEng.exe", "NisSrv.exe", "SecurityHealthService.exe",
+                        "spoolsv.exe", "msdtc.exe", "dllhost.exe", "taskhostw.exe",
+                        "ctfmon.exe", "sihost.exe", "ShellExperienceHost.exe",
+                        "StartMenuExperienceHost.exe", "TextInputHost.exe",
+                    ];
+                    if exclude.contains(&name.as_ref()) { return false; }
+                }
                 #[cfg(not(target_os = "windows"))]
-                let excluded = exclude_unix.iter().any(|e| name.starts_with(e));
-                !excluded && p.cpu_usage() > 0.0
+                {
+                    let exclude_prefixes = [
+                        "kernel_task", "launchd", "kextd", "notifyd", "configd",
+                        "diskarbitrationd", "systemd", "kworker", "ksoftirqd",
+                        "migration", "rcu_", "irq/", "scsi_",
+                    ];
+                    if exclude_prefixes.iter().any(|e| name.starts_with(e)) { return false; }
+                }
+                p.cpu_usage() > 0.0
             })
             .map(|p| ProcessInfo {
                 name:        p.name().to_string_lossy().to_string(),
@@ -420,10 +420,12 @@ pub fn open_image_tools_cli() -> Result<String, String> {
                 let launched = ["x-terminal-emulator", "gnome-terminal", "xfce4-terminal", "konsole", "xterm"]
                     .iter()
                     .find_map(|term| {
+                        let inline_arg;
                         let args: Vec<&str> = if *term == "gnome-terminal" || *term == "xfce4-terminal" {
                             vec!["--", py, &script_str]
                         } else {
-                            vec!["-e", &format!("{py} {script_str}")]
+                            inline_arg = format!("{py} {script_str}");
+                            vec!["-e", &inline_arg]
                         };
                         std::process::Command::new(term).args(&args).spawn().ok()
                     });
