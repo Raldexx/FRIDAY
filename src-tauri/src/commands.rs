@@ -610,6 +610,167 @@ pub fn run_command(command: String) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).to_string())
 }
 
+// ── Active Window Detection ───────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn get_active_window() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        get_active_window_windows()
+    }
+    #[cfg(target_os = "macos")]
+    {
+        get_active_window_macos()
+    }
+    #[cfg(target_os = "linux")]
+    {
+        get_active_window_linux()
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_active_window_windows() -> Option<String> {
+    use winapi::um::winuser::{GetForegroundWindow, GetWindowTextA};
+    use std::ffi::CStr;
+    
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.is_null() {
+            return None;
+        }
+        
+        let mut buf = vec![0u8; 512];
+        let len = GetWindowTextA(hwnd, buf.as_mut_ptr() as *mut i8, 512);
+        if len == 0 {
+            return None;
+        }
+        
+        CStr::from_ptr(buf.as_ptr() as *const i8)
+            .to_string_lossy()
+            .to_string()
+            .into()
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn get_active_window_macos() -> Option<String> {
+    let output = std::process::Command::new("osascript")
+        .arg("-e")
+        .arg("tell application \"System Events\" to get name of (processes where frontmost is true)")
+        .output()
+        .ok()?;
+    
+    let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if result.is_empty() { None } else { Some(result) }
+}
+
+#[cfg(target_os = "linux")]
+fn get_active_window_linux() -> Option<String> {
+    // Try xdotool first
+    if let Ok(output) = std::process::Command::new("xdotool")
+        .args(&["getactivewindow", "getwindowname"])
+        .output()
+    {
+        let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !result.is_empty() {
+            return Some(result);
+        }
+    }
+    
+    // Fallback to wmctrl
+    let output = std::process::Command::new("wmctrl")
+        .arg("-l")
+        .output()
+        .ok()?;
+    
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .find(|l| l.contains('*'))
+        .and_then(|l| l.split_whitespace().nth(3))
+        .map(|s| s.to_string())
+}
+
+// ── Auto Performance Mode Detection ────────────────────────────────────────────
+
+#[tauri::command]
+pub fn get_running_apps() -> Vec<String> {
+    with_sys(|sys| {
+        sys.refresh_processes(ProcessesToUpdate::All, true);
+        sys.processes()
+            .values()
+            .map(|p| p.name().to_string())
+            .collect()
+    })
+}
+
+#[tauri::command]
+pub fn detect_auto_performance_mode() -> String {
+    let active_window = match get_active_window() {
+        Some(w) => w.to_lowercase(),
+        None => String::new(),
+    };
+    
+    let running_apps: Vec<String> = get_running_apps()
+        .iter()
+        .map(|s| s.to_lowercase())
+        .collect();
+    
+    // Check for games → eco mode
+    let games = [
+        "unreal", "unrealengine", "ue4", "ue5",
+        "unity", "unityhub",
+        "steam", "steamapps",
+        "epic games launcher", "epicgameslauncher",
+        "obs", "obs studio",
+        "blender",
+        "fortnite", "valorant", "csgo", "cs2", "dota2", "lol",
+        "ffxiv", "wow", "elden ring", "cyberpunk",
+        "nvidia geforce now", "geforceexperience",
+        "autocad",
+        "davinci resolve"
+    ];
+    
+    for game in &games {
+        if active_window.contains(game) {
+            return "eco".to_string();
+        }
+        for app in &running_apps {
+            if app.contains(game) {
+                return "eco".to_string();
+            }
+        }
+    }
+    
+    // Check for code editors
+    let editors = [
+        "code", "visual studio code",
+        "cursor",
+        "visualstudio", "devenv",
+        "jetbrains", "intellij", "pycharm", "webstorm", "clion",
+        "sublime",
+        "vim", "neovim",
+        "atom",
+        "notepad++",
+        "emacs",
+        "gedit", "pluma",
+        "kate"
+    ];
+    
+    for editor in &editors {
+        if active_window.contains(editor) {
+            return "normal".to_string();
+        }
+        for app in &running_apps {
+            if app.contains(editor) {
+                return "normal".to_string();
+            }
+        }
+    }
+    
+    // Default to normal if nothing special detected
+    "normal".to_string()
+}
+
 // ── Weather ───────────────────────────────────────────────────────────────────
 
 #[tauri::command]

@@ -861,6 +861,44 @@ export default function App() {
         </div>
       )}
 
+      {/* ── ECO MODE OVERLAY (same as idle) ────────────────────────────────── */}
+      {settings.perfMode === 'eco' && !isIdle && (
+        <div
+          className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
+          style={{
+            background: tc ? 'rgba(0,0,0,0.82)' : (settings.darkTheme ? 'rgba(10,10,12,0.92)' : 'rgba(240,240,245,0.92)'),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
+          {/* Big clock */}
+          <div className="font-mono text-[52px] font-black tabular-nums tracking-tight" style={{color:tc?tc.accent:undefined}}
+            ><span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>{clock}</span></div>
+
+          {/* Mini metrics row */}
+          <div className="flex gap-3">
+            {[
+              { label:'CPU', value:`${Math.round(sys.cpu_percent)}%`, color:'#3b82f6' },
+              { label:'RAM', value:`${Math.round(sys.ram_percent)}%`, color:'#8b5cf6' },
+              { label:'GPU', value:`${Math.round(0)}%`,             color:'#f59e0b' },
+            ].map(({label,value,color})=>(
+              <div key={label} className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl border"
+                style={tc
+                  ?{background:tc.cardBg,borderColor:tc.cardBorder}
+                  :{background:'rgba(255,255,255,0.08)',borderColor:'rgba(255,255,255,0.12)'}}>
+                <div className="text-[8px] font-bold tracking-[0.12em]" style={{color: tc?tc.textMuted:'rgba(255,255,255,0.4)'}}>{label}</div>
+                <div className="text-[22px] font-extrabold tabular-nums font-mono" style={{color}}>{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Eco mode indicator */}
+          <div className="text-[10px] font-medium" style={{color:tc?tc.textMuted:'rgba(255,255,255,0.3)'}}>
+            🌿 {t.perfEcoInfo}
+          </div>
+        </div>
+      )}
+
       {/* Scrollable content layer */}
       <div className="friday-scroll">
 
@@ -1119,6 +1157,30 @@ export default function App() {
                   ))}
                 </div>
               )},
+              {id:'autoMode', label:'🤖 Auto Mode', ctrl:(
+                <div className="flex gap-1 no-drag">
+                  {[true,false].map(v=>(
+                    <button key={String(v)} onClick={()=>updateSettings({autoModeEnabled:v})}
+                      style={settings.autoModeEnabled===v&&tc?{background:tc.accent,color:'#000'}:tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
+                      className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                        !tc&&(settings.autoModeEnabled===v?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]':'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'))}>
+                      {v?t.on:t.off}
+                    </button>
+                  ))}
+                </div>
+              )},
+              ...(settings.autoModeEnabled ? [{id:'manualLock', label:'🔒 Lock Mode', ctrl:(
+                <div className="flex gap-1 no-drag">
+                  {[true,false].map(v=>(
+                    <button key={String(v)} onClick={()=>updateSettings({manualLock:v})}
+                      style={settings.manualLock===v&&tc?{background:tc.accent,color:'#000'}:tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
+                      className={cn('px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
+                        !tc&&(settings.manualLock===v?'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]':'bg-black/[0.05] dark:bg-white/[0.07] text-black/40 dark:text-white/40'))}>
+                      {v?t.on:t.off}
+                    </button>
+                  ))}
+                </div>
+              )}] : []),
               {id:'artistTheme', label: t.artistThemeLabel, ctrl:(
                 <div className="flex gap-1 no-drag">
                   {([['none','⬜ Off'],['icardi','⚽ İcardi'],['madison','💜 Madison']] as const).map(([v,lbl])=>(

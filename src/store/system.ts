@@ -479,11 +479,13 @@ export interface Settings {
   tourSeen:         boolean;
   manualTheme:      'none' | 'madison' | 'icardi';
   photoRotation:    boolean;
+  autoModeEnabled:  boolean;    // Enable automatic mode detection
+  manualLock:       boolean;    // Lock to current mode (override auto-detection)
 }
 
 export function loadSettings(): Settings {
-  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
-  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true }; }
+  try { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true, autoModeEnabled: false, manualLock: false, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch { return { darkTheme: false, alwaysOnTop: false, perfMode: 'normal', language: 'en', startWithWindows: false, tourSeen: false, manualTheme: 'none', photoRotation: true, autoModeEnabled: false, manualLock: false }; }
 }
 
 export function saveSettings(s: Partial<Settings>) {
@@ -633,6 +635,35 @@ export function useSystemData() {
     slowId.current = setInterval(slowTick, mode.slowInterval);
   }, [settings.perfMode, fastTick, slowTick]);
 
+  // ── Auto-detection of performance mode ──────────────────────────────────────
+  const autoModeDetectionId = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const detectAutoMode = useCallback(async () => {
+    if (!settings.autoModeEnabled || settings.manualLock) return;
+    
+    const mode = await inv<string>('detect_auto_performance_mode');
+    if (mode && mode !== settings.perfMode) {
+      updateSettings({ perfMode: mode as PerfMode });
+    }
+  }, [settings.autoModeEnabled, settings.manualLock, settings.perfMode, updateSettings]);
+
+  useEffect(() => {
+    if (!settings.autoModeEnabled) {
+      if (autoModeDetectionId.current) clearInterval(autoModeDetectionId.current);
+      return;
+    }
+    
+    // Run detection immediately
+    detectAutoMode();
+    
+    // Then every 2 seconds
+    autoModeDetectionId.current = setInterval(detectAutoMode, 2000);
+    
+    return () => {
+      if (autoModeDetectionId.current) clearInterval(autoModeDetectionId.current);
+    };
+  }, [settings.autoModeEnabled, detectAutoMode]);
+
   useEffect(() => {
     startPolling();
     if (settings.alwaysOnTop) {
@@ -641,6 +672,7 @@ export function useSystemData() {
     return () => {
       if (fastId.current) clearInterval(fastId.current);
       if (slowId.current) clearInterval(slowId.current);
+      if (autoModeDetectionId.current) clearInterval(autoModeDetectionId.current);
     };
   }, [settings.perfMode]);
 

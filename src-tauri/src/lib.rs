@@ -48,6 +48,9 @@ pub fn run() {
             commands::open_url,
             commands::kill_process,
             commands::run_command,
+            commands::get_active_window,
+            commands::get_running_apps,
+            commands::detect_auto_performance_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error running F.R.I.D.A.Y.");
