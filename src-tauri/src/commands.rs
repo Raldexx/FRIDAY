@@ -698,7 +698,7 @@ pub fn get_running_apps() -> Vec<String> {
         sys.refresh_processes(ProcessesToUpdate::All, true);
         sys.processes()
             .values()
-            .map(|p| p.name().to_string())
+            .map(|p| p.name().to_string_lossy().to_string())
             .collect()
     })
 }
