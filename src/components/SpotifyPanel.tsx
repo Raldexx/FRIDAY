@@ -21,6 +21,47 @@ const SPOTIFY_ICON = (
 export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPanelProps) {
   const [recentTracks, setRecentTracks] = useState<{n:string;a:string;ts:string}[]>([]);
   const prevTrack = useRef('');
+  const [api, setApi] = useState<{connected:boolean; client_id:string}>({ connected:false, client_id:'' });
+  const [clientId, setClientId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [apiErr, setApiErr] = useState('');
+
+  async function refreshApiStatus() {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const st = await invoke<{connected:boolean; client_id:string}>('spotify_status');
+      setApi(st);
+      if (st.client_id) setClientId(st.client_id);
+    } catch(e) { console.warn(e); }
+  }
+
+  useEffect(() => { if (open) refreshApiStatus(); }, [open]);
+
+  async function connectApi() {
+    setBusy(true); setApiErr('');
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('spotify_login', { clientId: clientId.trim() });
+      await refreshApiStatus();
+    } catch(e) { setApiErr(String(e)); }
+    finally { setBusy(false); }
+  }
+
+  async function disconnectApi() {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('spotify_logout');
+      await refreshApiStatus();
+    } catch(e) { setApiErr(String(e)); }
+  }
+
+  const fmt = (ms?: number | null) => {
+    if (ms == null) return '—:——';
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  };
+  const hasProgress = spotify.duration_ms != null && spotify.progress_ms != null && spotify.duration_ms > 0;
+  const pct = hasProgress ? Math.min(100, (spotify.progress_ms! / spotify.duration_ms!) * 100) : 35;
 
   useEffect(() => {
     if (spotify.playing && spotify.track && spotify.track !== prevTrack.current) {
@@ -72,7 +113,9 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
             <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-2xl p-3 border border-black/[0.05] dark:border-white/[0.06]">
               <div className="text-[9px] font-bold tracking-[0.14em] text-spotify mb-2">{t.nowPlaying}</div>
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-spotify to-[#158a3e] flex items-center justify-center text-lg flex-shrink-0">♫</div>
+                {spotify.album_art
+                  ? <img src={spotify.album_art} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                  : <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-spotify to-[#158a3e] flex items-center justify-center text-lg flex-shrink-0">♫</div>}
                 <div className="min-w-0">
                   <div className="text-[14px] font-bold truncate" style={tc?{color:tc.textPrimary}:{}}>{spotify.track || t.notPlaying}</div>
                   <div className="text-[11px]" style={tc?{color:tc.textMuted}:{color:undefined}}>{spotify.artist || (spotify.playing ? '—' : t.openSpotify)}</div>
@@ -81,10 +124,10 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
               {spotify.playing ? (
                 <>
                   <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
-                    <div className="h-full bg-spotify rounded-full w-[35%]" />
+                    <div className="h-full bg-spotify rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="flex justify-between mt-1 text-[10px] text-black/20 dark:text-white/20">
-                    <span>—:——</span><span>—:——</span>
+                    <span>{fmt(spotify.progress_ms)}</span><span>{fmt(spotify.duration_ms)}</span>
                   </div>
                 </>
               ) : (
@@ -100,6 +143,41 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
                 <div className="text-[11px] font-semibold text-[#1a1a1a] dark:text-[#e8e8ea] text-center">Premium Feature</div>
                 <div className="text-[10px] text-black/30 dark:text-white/30 text-center">Live lyrics require a<br/>Spotify Premium token.</div>
               </div>
+            </div>
+
+            {/* Spotify API connection */}
+            <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-2xl p-3 border border-black/[0.05] dark:border-white/[0.06]">
+              <div className="text-[9px] font-bold tracking-[0.14em] text-black/30 dark:text-white/30 mb-2">SPOTIFY API</div>
+              {api.connected ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-spotify flex-1">● Connected</span>
+                  <button onClick={disconnectApi} className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-black/[0.05] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] transition-colors">
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <input
+                    value={clientId}
+                    onChange={e => setClientId(e.target.value)}
+                    placeholder="Client ID"
+                    spellCheck={false}
+                    className="w-full text-[11px] px-2.5 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08] outline-none"
+                  />
+                  <button
+                    onClick={connectApi}
+                    disabled={busy || !clientId.trim()}
+                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-spotify/10 text-spotify hover:bg-spotify/20 disabled:opacity-40 transition-colors"
+                  >
+                    {busy ? 'Waiting for browser…' : 'Connect'}
+                  </button>
+                  <div className="text-[9px] text-black/30 dark:text-white/30 leading-snug">
+                    Add this Redirect URI in your Spotify app:<br/>
+                    <span className="select-all">http://127.0.0.1:8888/callback</span>
+                  </div>
+                </div>
+              )}
+              {apiErr && <div className="text-[10px] text-red-500 mt-1.5 break-words">{apiErr}</div>}
             </div>
 
             {/* Service selector */}

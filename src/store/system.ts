@@ -33,6 +33,10 @@ export interface SpotifyInfo {
   playing: boolean;
   track:   string;
   artist:  string;
+  // Only filled when connected to the Spotify Web API
+  album_art?:   string | null;
+  progress_ms?: number | null;
+  duration_ms?: number | null;
 }
 
 export interface SystemInfo {
@@ -601,7 +605,8 @@ export function useSystemData() {
     }
 
     if (mode.spotify) {
-      const sp = await inv<SpotifyInfo>('get_spotify');
+      // Web API when connected, otherwise the old window-title detection
+      const sp = (await inv<SpotifyInfo>('get_spotify_api')) ?? (await inv<SpotifyInfo>('get_spotify'));
       if (sp) {
         setSpotify(prev => {
           if (sp.playing && sp.track && sp.track !== prev.track) {

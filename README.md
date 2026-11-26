@@ -39,6 +39,15 @@
 - Real session history — tracks accumulate as you listen
 - Lyrics panel (Premium — requires Spotify API token)
 
+#### Spotify API setup (optional, adds album art and real progress bar)
+
+1. Create an app at https://developer.spotify.com/dashboard and tick **Web API**
+2. Add this Redirect URI exactly: `http://127.0.0.1:8888/callback` (`localhost` is not accepted by Spotify)
+3. While the app is in development mode, add your own account under **User Management**
+4. In F.R.I.D.A.Y. open the Music panel, paste the **Client ID**, press **Connect**
+
+No client secret is used (PKCE). Tokens are stored in the app data folder. Without connecting, the window-title detection keeps working as before.
+
 ### 🌍 Language Support
 - English 🇬🇧, Turkish 🇹🇷, Spanish 🇪🇸
 - Language preference saved to local storage

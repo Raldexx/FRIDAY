@@ -1,4 +1,5 @@
 mod commands;
+mod spotify_api;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -39,6 +40,10 @@ pub fn run() {
             commands::get_processes,
             commands::get_weather,
             commands::get_spotify,
+            commands::get_spotify_api,
+            commands::spotify_login,
+            commands::spotify_logout,
+            commands::spotify_status,
             commands::get_system_info,
             commands::system_action,
             commands::open_image_tools_cli,

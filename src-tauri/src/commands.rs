@@ -189,6 +189,36 @@ pub fn get_spotify() -> SpotifyInfo {
     SpotifyInfo { playing: false, track: String::new(), artist: String::new() }
 }
 
+// Spotify Web API (PKCE). Logic lives in spotify_api.rs; these are thin wrappers.
+
+fn spotify_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    app.path().app_data_dir().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn spotify_login(app: tauri::AppHandle, client_id: String) -> Result<(), String> {
+    crate::spotify_api::login(&spotify_dir(&app)?, &client_id).await
+}
+
+#[tauri::command]
+pub fn spotify_logout(app: tauri::AppHandle) -> Result<(), String> {
+    crate::spotify_api::logout(&spotify_dir(&app)?);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn spotify_status(app: tauri::AppHandle) -> Result<crate::spotify_api::Status, String> {
+    Ok(crate::spotify_api::status(&spotify_dir(&app)?))
+}
+
+/// None = not connected (or API error) -> frontend falls back to get_spotify.
+#[tauri::command]
+pub async fn get_spotify_api(app: tauri::AppHandle) -> Option<crate::spotify_api::NowPlaying> {
+    let dir = spotify_dir(&app).ok()?;
+    crate::spotify_api::now_playing(&dir).await
+}
+
 fn parse_spotify_title(title: String) -> SpotifyInfo {
     if title.contains(" - ") {
         let mut p = title.splitn(2, " - ");
