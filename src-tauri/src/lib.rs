@@ -46,8 +46,6 @@ pub fn run() {
             commands::spotify_status,
             commands::get_system_info,
             commands::system_action,
-            commands::open_image_tools_cli,
-            commands::check_python,
             commands::open_folder_picker,
             commands::sort_files,
             commands::get_active_window,

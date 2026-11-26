@@ -18,7 +18,7 @@ interface ChartModalProps {
 const CHART_META = {
   cpu:  { title: 'CPU Usage',  color: '#3b82f6' },
   ram:  { title: 'RAM Usage',  color: '#8b5cf6' },
-  gpu:  { title: 'GPU Usage',  color: '#f59e0b' },
+  gpu:  { title: 'GPU Temp',   color: '#f59e0b' },
   net:  { title: 'Network ↓',  color: '#10b981' },
   disk: { title: 'Disk Usage', color: '#6b7280' },
 };
@@ -34,7 +34,7 @@ export function ChartModal({ open, onClose, chartKey, sys, net, sysInfo, cpuHist
   const currentVal = {
     cpu:  `${Math.round(sys.cpu_percent)}%`,
     ram:  `${Math.round(sys.ram_percent)}%`,
-    gpu:  `${Math.round(0)}%`,
+    gpu:  fmtTemp(sys.gpu_temp),
     net:  fmtSpeed(net.dlSpeed),
     disk: `${Math.round(sys.disk_percent)}%`,
   }[chartKey];

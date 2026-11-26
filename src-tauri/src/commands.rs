@@ -405,83 +405,6 @@ pub fn system_action(action: String) -> Result<(), String> {
     Ok(())
 }
 
-// ── Image Tools ───────────────────────────────────────────────────────────────
-
-#[tauri::command]
-pub fn open_image_tools_cli() -> Result<String, String> {
-    let python_cmds = ["python3", "python", "py"];
-    let script_name = "image_upscaler.py";
-
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.to_path_buf()));
-
-    let search_paths: Vec<std::path::PathBuf> = [
-        exe_dir.clone().map(|d| d.join(script_name)),
-        exe_dir.clone().map(|d| d.join("resources").join(script_name)),
-        Some(std::path::PathBuf::from(script_name)),
-    ].into_iter().flatten().collect();
-
-    let script_path = search_paths.into_iter().find(|p| p.exists());
-    let script_str = match &script_path {
-        Some(p) => p.to_string_lossy().into_owned(),
-        None => return Err("image_upscaler.py not found. Place it next to the FRIDAY executable.".into()),
-    };
-
-    for py in python_cmds {
-        if std::process::Command::new(py).arg("--version").output().is_ok() {
-            #[cfg(target_os = "windows")]
-            std::process::Command::new("cmd")
-                .args(["/c", "start", "cmd", "/k", py, &script_str])
-                .spawn()
-                .map_err(|e| e.to_string())?;
-
-            #[cfg(target_os = "macos")]
-            std::process::Command::new("osascript")
-                .args(["-e", &format!(
-                    "tell application \"Terminal\" to do script \"{py} {script_str}\""
-                )])
-                .spawn()
-                .map_err(|e| e.to_string())?;
-
-            #[cfg(target_os = "linux")]
-            {
-                // Try terminals in order of preference
-                let launched = ["x-terminal-emulator", "gnome-terminal", "xfce4-terminal", "konsole", "xterm"]
-                    .iter()
-                    .find_map(|term| {
-                        let inline_arg;
-                        let args: Vec<&str> = if *term == "gnome-terminal" || *term == "xfce4-terminal" {
-                            vec!["--", py, &script_str]
-                        } else {
-                            inline_arg = format!("{py} {script_str}");
-                            vec!["-e", &inline_arg]
-                        };
-                        std::process::Command::new(term).args(&args).spawn().ok()
-                    });
-                if launched.is_none() {
-                    return Err("No terminal emulator found. Install gnome-terminal, xterm, or konsole.".into());
-                }
-            }
-
-            return Ok(format!("Launched: {py} {script_str}"));
-        }
-    }
-    Err("Python not found. Install Python 3 and run: pip install opencv-python Pillow numpy".into())
-}
-
-#[tauri::command]
-pub fn check_python() -> String {
-    for py in ["python3", "python", "py"] {
-        if let Ok(out) = std::process::Command::new(py).args(["--version"]).output() {
-            if out.status.success() {
-                return String::from_utf8_lossy(&out.stdout).trim().to_string();
-            }
-        }
-    }
-    "not_found".into()
-}
-
 // ── Folder Picker ─────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -697,72 +620,66 @@ pub fn get_running_apps() -> Vec<String> {
     })
 }
 
+/// Heavy apps are matched by their exact process name (lowercase, no ".exe").
+/// The old code used `contains()` on every running process, so e.g. an idle Steam
+/// service in the background kept forcing Eco mode.
+const HEAVY_PROCESSES: &[&str] = &[
+    "fortniteclient-win64-shipping", "valorant-win64-shipping", "cs2", "csgo", "dota2",
+    "league of legends", "ffxiv_dx11", "ffxiv", "wow", "wow-64", "eldenring", "cyberpunk2077",
+    "unrealeditor", "ue4editor", "unity", "blender", "obs64", "obs", "resolve", "acad",
+];
+
+/// Launchers and tools that sit idle in the background all day are only counted
+/// when their window is the one in front.
+const HEAVY_WINDOW_TITLES: &[&str] = &[
+    "steam", "epic games launcher", "geforce now", "obs studio", "blender", "autocad",
+    "davinci resolve", "unreal engine", "unity",
+    "fortnite", "valorant", "counter-strike", "dota 2", "league of legends",
+    "final fantasy xiv", "world of warcraft", "elden ring", "cyberpunk",
+];
+
+/// Pure decision logic (kept separate so it can be unit-tested).
+fn classify_performance_mode(active_window: &str, running_apps: &[String]) -> &'static str {
+    let active_window = active_window.to_lowercase();
+    if HEAVY_WINDOW_TITLES.iter().any(|t| active_window.contains(t)) {
+        return "eco";
+    }
+    let heavy_running = running_apps.iter().any(|name| {
+        let n = name.to_lowercase();
+        let n = n.strip_suffix(".exe").unwrap_or(&n);
+        HEAVY_PROCESSES.contains(&n)
+    });
+    if heavy_running { "eco" } else { "normal" }
+}
+
 #[tauri::command]
 pub fn detect_auto_performance_mode() -> String {
-    let active_window = match get_active_window() {
-        Some(w) => w.to_lowercase(),
-        None => String::new(),
-    };
-    
-    let running_apps: Vec<String> = get_running_apps()
-        .iter()
-        .map(|s| s.to_lowercase())
-        .collect();
-    
-    // Check for games → eco mode
-    let games = [
-        "unreal", "unrealengine", "ue4", "ue5",
-        "unity", "unityhub",
-        "steam", "steamapps",
-        "epic games launcher", "epicgameslauncher",
-        "obs", "obs studio",
-        "blender",
-        "fortnite", "valorant", "csgo", "cs2", "dota2", "lol",
-        "ffxiv", "wow", "elden ring", "cyberpunk",
-        "nvidia geforce now", "geforceexperience",
-        "autocad",
-        "davinci resolve"
-    ];
-    
-    for game in &games {
-        if active_window.contains(game) {
-            return "eco".to_string();
-        }
-        for app in &running_apps {
-            if app.contains(game) {
-                return "eco".to_string();
-            }
-        }
+    classify_performance_mode(&get_active_window().unwrap_or_default(), &get_running_apps()).to_string()
+}
+
+#[cfg(test)]
+mod auto_mode_tests {
+    use super::*;
+    fn apps(v: &[&str]) -> Vec<String> { v.iter().map(|s| s.to_string()).collect() }
+
+    #[test]
+    fn background_launchers_do_not_force_eco() {
+        // These used to match through substring search ("steam", "obs", "wow", "lol", "unity")
+        let running = apps(&["steamwebhelper.exe", "steamservice.exe", "ObsidianHelper.exe", "Showcase.exe", "protocolhandler.exe", "UnityHub.exe"]);
+        assert_eq!(classify_performance_mode("Notepad", &running), "normal");
     }
-    
-    // Check for code editors
-    let editors = [
-        "code", "visual studio code",
-        "cursor",
-        "visualstudio", "devenv",
-        "jetbrains", "intellij", "pycharm", "webstorm", "clion",
-        "sublime",
-        "vim", "neovim",
-        "atom",
-        "notepad++",
-        "emacs",
-        "gedit", "pluma",
-        "kate"
-    ];
-    
-    for editor in &editors {
-        if active_window.contains(editor) {
-            return "normal".to_string();
-        }
-        for app in &running_apps {
-            if app.contains(editor) {
-                return "normal".to_string();
-            }
-        }
+    #[test]
+    fn real_game_process_gives_eco() {
+        assert_eq!(classify_performance_mode("", &apps(&["cs2.exe"])), "eco");
+        assert_eq!(classify_performance_mode("", &apps(&["Blender.EXE"])), "eco");
+        assert_eq!(classify_performance_mode("", &apps(&["eldenring"])), "eco");
     }
-    
-    // Default to normal if nothing special detected
-    "normal".to_string()
+    #[test]
+    fn launcher_only_counts_when_in_front() {
+        assert_eq!(classify_performance_mode("Steam", &apps(&[])), "eco");
+        assert_eq!(classify_performance_mode("Steam", &apps(&["steam.exe"])), "eco");
+        assert_eq!(classify_performance_mode("Visual Studio Code", &apps(&["steam.exe"])), "normal");
+    }
 }
 
 // ── Weather ───────────────────────────────────────────────────────────────────

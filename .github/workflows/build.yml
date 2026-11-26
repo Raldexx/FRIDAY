@@ -94,7 +94,6 @@ jobs:
             - AppImage: `chmod +x FRIDAY_*.AppImage && ./FRIDAY_*.AppImage`
 
             ### Notes
-            - Python 3 required for Image Tools CLI: `pip install opencv-python Pillow numpy`
             - Linux Spotify detection requires `playerctl`: `sudo apt install playerctl`
             - macOS Spotify detection uses AppleScript (built-in, no setup needed)
           releaseDraft: false

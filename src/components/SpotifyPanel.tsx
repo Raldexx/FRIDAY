@@ -19,8 +19,8 @@ const SPOTIFY_ICON = (
 );
 
 export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPanelProps) {
-  const [recentTracks, setRecentTracks] = useState<{n:string;a:string;ts:string}[]>([]);
-  const prevTrack = useRef('');
+  const [recentTracks, setRecentTracks] = useState<{n:string;a:string;art:string|null;ts:string}[]>([]);
+  const prevInfo = useRef<{n:string;a:string;art:string|null}|null>(null);
   const [api, setApi] = useState<{connected:boolean; client_id:string}>({ connected:false, client_id:'' });
   const [clientId, setClientId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -61,42 +61,23 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   };
   const hasProgress = spotify.duration_ms != null && spotify.progress_ms != null && spotify.duration_ms > 0;
-  const pct = hasProgress ? Math.min(100, (spotify.progress_ms! / spotify.duration_ms!) * 100) : 35;
+  const pct = hasProgress ? Math.min(100, (spotify.progress_ms! / spotify.duration_ms!) * 100) : 0;
 
   useEffect(() => {
-    if (spotify.playing && spotify.track && spotify.track !== prevTrack.current) {
-      if (prevTrack.current) {
+    if (spotify.playing && spotify.track && spotify.track !== prevInfo.current?.n) {
+      const old = prevInfo.current;
+      if (old) {
         setRecentTracks(prev => [
-          { n: prevTrack.current, a: spotify.artist, ts: new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) },
+          { ...old, ts: new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) },
           ...prev
         ].slice(0, 8));
       }
-      prevTrack.current = spotify.track;
+      prevInfo.current = { n: spotify.track, a: spotify.artist, art: spotify.album_art ?? null };
     }
   }, [spotify.track, spotify.playing]);
 
-  async function openStatsWindow() {
-    try {
-      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-      const existing = WebviewWindow.getByLabel('stats');
-      const existingWin = await existing;
-      if (existingWin) { await existingWin.show(); await existingWin.setFocus(); return; }
-      const win = new WebviewWindow('stats', { url: '/stats', title: 'F.R.I.D.A.Y. — Spotify Stats', width: 700, height: 780, decorations: false, transparent: true, resizable: true });
-      win.once('tauri://created', () => win.show());
-    } catch(e) { console.warn(e); }
-  }
-
   return (
-    <Modal open={open} onClose={onClose} title={t.music} wide tc={tc}
-      actions={
-        <button
-          onClick={openStatsWindow}
-          className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-spotify/10 text-spotify hover:bg-spotify/20 transition-colors"
-        >
-          {t.stats}
-        </button>
-      }
-    >
+    <Modal open={open} onClose={onClose} title={t.music} wide tc={tc}>
       {isEco ? (
         <div className="flex flex-col items-center justify-center py-10 gap-3">
           <div className="text-4xl">🌿</div>
@@ -122,27 +103,17 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
                 </div>
               </div>
               {spotify.playing ? (
-                <>
+                hasProgress ? <>
                   <div className="h-[3px] bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
                     <div className="h-full bg-spotify rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="flex justify-between mt-1 text-[10px] text-black/20 dark:text-white/20">
                     <span>{fmt(spotify.progress_ms)}</span><span>{fmt(spotify.duration_ms)}</span>
                   </div>
-                </>
+                </> : null
               ) : (
                 <div className="text-[10px] text-black/20 dark:text-white/20 mt-1">{t.notPlaying}</div>
               )}
-            </div>
-
-            {/* Lyrics placeholder — Premium feature */}
-            <div className="bg-black/[0.03] dark:bg-white/[0.04] rounded-2xl p-3 border border-black/[0.05] dark:border-white/[0.06] flex-1 flex flex-col">
-              <div className="text-[9px] font-bold tracking-[0.14em] text-black/30 dark:text-white/30 mb-2">LYRICS</div>
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 py-3">
-                <div className="text-2xl">👑</div>
-                <div className="text-[11px] font-semibold text-[#1a1a1a] dark:text-[#e8e8ea] text-center">Premium Feature</div>
-                <div className="text-[10px] text-black/30 dark:text-white/30 text-center">Live lyrics require a<br/>Spotify Premium token.</div>
-              </div>
             </div>
 
             {/* Spotify API connection */}
@@ -207,7 +178,9 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
               {spotify.playing && (
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200/40 dark:border-green-800/30">
                   <span className="text-[9px] text-spotify w-3">♪</span>
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-spotify to-[#158a3e] flex items-center justify-center text-white text-[11px]">♫</div>
+                  {spotify.album_art
+                    ? <img src={spotify.album_art} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+                    : <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-spotify to-[#158a3e] flex items-center justify-center text-white text-[11px] flex-shrink-0">♫</div>}
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-semibold text-spotify truncate">{spotify.track}</div>
                     <div className="text-[9px] text-black/30 dark:text-white/30 truncate">{spotify.artist}</div>
@@ -219,7 +192,9 @@ export function SpotifyPanel({ open, onClose, spotify, t, isEco, tc }: SpotifyPa
               {recentTracks.map((tr, i) => (
                 <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors">
                   <span className="text-[9px] text-black/20 dark:text-white/20 w-3">{i+1}</span>
-                  <div className="w-7 h-7 rounded-lg bg-black/[0.05] dark:bg-white/[0.08] flex items-center justify-center text-[11px]">♫</div>
+                  {tr.art
+                    ? <img src={tr.art} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+                    : <div className="w-7 h-7 rounded-lg bg-black/[0.05] dark:bg-white/[0.08] flex items-center justify-center text-[11px] flex-shrink-0">♫</div>}
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-semibold text-[#1a1a1a] dark:text-[#e8e8ea] truncate">{tr.n}</div>
                     <div className="text-[9px] text-black/30 dark:text-white/30 truncate">{tr.a}</div>

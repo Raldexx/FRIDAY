@@ -101,11 +101,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     recentlyPlayed: 'RECENTLY PLAYED',
     visualizer: 'VISUALIZER',
     musicService: 'MUSIC SERVICE',
-    stats: '📊 Stats',
     demoMode: 'DEMO MODE',
     uptime: 'Uptime',
     free: 'free',
     perfEcoInfo: 'CPU & RAM only · 5s refresh · low load',
+    idleResume: 'Click to resume',
+    timerStartHint: 'Click to start',
     perfNormalInfo: 'All metrics · 1s refresh · balanced',
     perfTurboInfo: 'All metrics · 500ms refresh · max accuracy',
     topProcesses: 'TOP PROCESSES',
@@ -134,7 +135,38 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     photoRotationLabel: 'Photo Rotation',
     changelogEntries: [
       {
-        ver: 'v4.0.0', date: 'Current — JARVIS → F.R.I.D.A.Y.',
+        ver: 'v4.2.0', date: 'Current — Bug-fix release',
+        items: [
+          { type: 'fix', text: '🌿 Eco mode no longer covers the screen — it only lowers the refresh rate; the overlay now appears only on real idle' },
+          { type: 'fix', text: '🤖 Auto Mode no longer jumps to Eco because of background launchers (Steam, OBS…): it matches exact app names and pauses for 10 min after you pick a mode yourself' },
+          { type: 'fix', text: '📈 GPU card showed a fake 0% — it now shows the real GPU temperature with a live graph' },
+          { type: 'fix', text: '💤 Idle screen GPU tile fixed; idle and timer hint texts now follow the app language' },
+          { type: 'fix', text: '🎵 Music history showed the wrong artist for earlier tracks' },
+          { type: 'fix', text: '🎵 Music progress bar no longer shows a fake 35% when the duration is unknown' },
+          { type: 'fix', text: '🔢 Version numbers are in sync everywhere' },
+          { type: 'add', text: '🎧 Optional Spotify Web API login — album art, real progress bar and time (PKCE, no client secret)' },
+          { type: 'add', text: '🖼 Album art in recently played' },
+          { type: 'imp', text: '⚙️ Top processes: clean names (no .exe) and a full-width card' },
+          { type: 'imp', text: '🎨 Window buttons (minimize / maximize / close) are now colored' },
+          { type: 'imp', text: '🔲 Square-corner look across the whole app, like a normal Windows window' },
+          { type: 'rem', text: '🎙 F.R.I.D.A.Y. AI voice assistant and its commands (run_command, kill_process, open_url)' },
+          { type: 'rem', text: '📊 Spotify stats window and the lyrics card' },
+          { type: 'rem', text: '🚀 image_upscaler.py launcher in Image Tools' },
+          { type: 'rem', text: '🔄 AI Translator card hidden from the UI (code kept)' },
+        ],
+      },
+      {
+        ver: 'v4.1.0', date: 'Cross-Platform',
+        items: [
+          { type: 'add', text: '🐧 Full Linux support: Spotify via playerctl/D-Bus, power actions via systemctl, folder picker via zenity/kdialog' },
+          { type: 'add', text: '🍎 Full macOS support: Spotify via AppleScript, power actions via System Events, folder picker via osascript' },
+          { type: 'imp', text: '🔨 GitHub Actions builds Windows + macOS (Intel & Apple Silicon) + Linux in parallel' },
+          { type: 'fix', text: '🐛 Process list filter updated for Unix process names' },
+          { type: 'fix', text: '🐛 "Start with Windows" renamed to "Start with system"' },
+        ],
+      },
+      {
+        ver: 'v4.0.0', date: 'JARVIS → F.R.I.D.A.Y.',
         items: [
           { type: 'add', text: '🤖 Renamed: JARVIS → F.R.I.D.A.Y. (Female Replacement Intelligent Digital Assistant Youth)' },
           { type: 'add', text: '🎙 F.R.I.D.A.Y. AI — Real-time voice assistant via OpenAI Realtime API (WebRTC, gpt-4o-realtime-preview)' },
@@ -210,11 +242,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     recentlyPlayed: 'SON ÇALINANLAR',
     visualizer: 'GÖRSELLEŞTİRİCİ',
     musicService: 'MÜZİK SERVİSİ',
-    stats: '📊 İstatistik',
     demoMode: 'DEMO MODU',
     uptime: 'Çalışma süresi',
     free: 'boş',
     perfEcoInfo: 'Yalnızca CPU & RAM · 5s yenileme · düşük yük',
+    idleResume: 'Devam etmek için tıkla',
+    timerStartHint: 'Başlamak için tıkla',
     perfNormalInfo: 'Tüm metrikler · 1s yenileme · dengeli',
     perfTurboInfo: 'Tüm metrikler · 500ms yenileme · maksimum hassasiyet',
     topProcesses: 'EN YOĞUN İŞLEMLER',
@@ -243,7 +276,38 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     photoRotationLabel: 'Foto Rotasyonu',
     changelogEntries: [
       {
-        ver: 'v4.0.0', date: 'Güncel — JARVIS → F.R.I.D.A.Y.',
+        ver: 'v4.2.0', date: 'Güncel — Hata düzeltme sürümü',
+        items: [
+          { type: 'fix', text: '🌿 Eco modu artık ekranı kaplamıyor — sadece yenileme hızını düşürür; perde yalnızca gerçek boşta kalma durumunda çıkar' },
+          { type: 'fix', text: '🤖 Auto Mode artık arka plandaki başlatıcılar (Steam, OBS…) yüzünden Eco\'ya geçmiyor: tam uygulama adıyla eşleşir ve elle mod seçince 10 dk duraklar' },
+          { type: 'fix', text: '📈 GPU kartı sahte %0 gösteriyordu — artık gerçek GPU sıcaklığını canlı grafikle gösteriyor' },
+          { type: 'fix', text: '💤 Boşta ekranındaki GPU kutusu düzeltildi; boşta ve zamanlayıcı yönerge metinleri uygulama diline uyuyor' },
+          { type: 'fix', text: '🎵 Müzik geçmişi önceki şarkılar için yanlış sanatçı gösteriyordu' },
+          { type: 'fix', text: '🎵 Süre bilinmiyorsa müzik ilerleme çubuğu artık sahte %35 göstermiyor' },
+          { type: 'fix', text: '🔢 Sürüm numaraları her yerde eşitlendi' },
+          { type: 'add', text: '🎧 İsteğe bağlı Spotify Web API girişi — albüm kapağı, gerçek ilerleme çubuğu ve süre (PKCE, gizli anahtar yok)' },
+          { type: 'add', text: '🖼 Son çalınanlarda albüm kapağı' },
+          { type: 'imp', text: '⚙️ En yoğun işlemler: sade isimler (.exe yok) ve tam genişlik kart' },
+          { type: 'imp', text: '🎨 Pencere düğmeleri (küçült / büyüt / kapat) renklendirildi' },
+          { type: 'imp', text: '🔲 Tüm uygulamada köşeli görünüm, normal bir Windows penceresi gibi' },
+          { type: 'rem', text: '🎙 F.R.I.D.A.Y. AI sesli asistanı ve komutları (run_command, kill_process, open_url)' },
+          { type: 'rem', text: '📊 Spotify istatistik penceresi ve şarkı sözü kartı' },
+          { type: 'rem', text: '🚀 Image Tools içindeki image_upscaler.py başlatıcısı' },
+          { type: 'rem', text: '🔄 AI Çeviri kartı arayüzden gizlendi (kod duruyor)' },
+        ],
+      },
+      {
+        ver: 'v4.1.0', date: 'Çapraz platform',
+        items: [
+          { type: 'add', text: '🐧 Tam Linux desteği: Spotify için playerctl/D-Bus, güç eylemleri için systemctl, klasör seçici için zenity/kdialog' },
+          { type: 'add', text: '🍎 Tam macOS desteği: Spotify için AppleScript, güç eylemleri için System Events, klasör seçici için osascript' },
+          { type: 'imp', text: '🔨 GitHub Actions Windows + macOS (Intel ve Apple Silicon) + Linux derlemelerini paralel yapıyor' },
+          { type: 'fix', text: '🐛 İşlem listesi filtresi Unix işlem adları için güncellendi' },
+          { type: 'fix', text: '🐛 "Windows ile başlat" ifadesi "Sistemle başlat" oldu' },
+        ],
+      },
+      {
+        ver: 'v4.0.0', date: 'JARVIS → F.R.I.D.A.Y.',
         items: [
           { type: 'add', text: '🤖 Yeniden adlandırıldı: JARVIS → F.R.I.D.A.Y. (Female Replacement Intelligent Digital Assistant Youth)' },
           { type: 'add', text: '🎙 F.R.I.D.A.Y. AI — OpenAI Realtime API (WebRTC, gpt-4o-realtime-preview) ile gerçek zamanlı sesli asistan' },
@@ -319,11 +383,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     recentlyPlayed: 'REPRODUCIDO RECIENTEMENTE',
     visualizer: 'VISUALIZADOR',
     musicService: 'SERVICIO DE MÚSICA',
-    stats: '📊 Estadísticas',
     demoMode: 'MODO DEMO',
     uptime: 'Tiempo activo',
     free: 'libre',
     perfEcoInfo: 'Solo CPU y RAM · 5s · carga baja',
+    idleResume: 'Haz clic para continuar',
+    timerStartHint: 'Haz clic para empezar',
     perfNormalInfo: 'Todas las métricas · 1s · equilibrado',
     perfTurboInfo: 'Todas las métricas · 500ms · máxima precisión',
     topProcesses: 'PROCESOS PRINCIPALES',
@@ -352,7 +417,38 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     photoRotationLabel: 'Rotación de foto',
     changelogEntries: [
       {
-        ver: 'v4.0.0', date: 'Actual — JARVIS → F.R.I.D.A.Y.',
+        ver: 'v4.2.0', date: 'Actual — Versión de correcciones',
+        items: [
+          { type: 'fix', text: '🌿 El modo Eco ya no cubre la pantalla: solo reduce la frecuencia de actualización; la capa aparece únicamente en inactividad real' },
+          { type: 'fix', text: '🤖 El Modo Auto ya no cambia a Eco por lanzadores en segundo plano (Steam, OBS…): compara el nombre exacto de la app y se pausa 10 min tras elegir un modo manualmente' },
+          { type: 'fix', text: '📈 La tarjeta GPU mostraba un 0% falso: ahora muestra la temperatura real con gráfico en vivo' },
+          { type: 'fix', text: '💤 Corregido el cuadro de GPU en la pantalla de inactividad; los textos de inactividad y temporizador siguen el idioma de la app' },
+          { type: 'fix', text: '🎵 El historial de música mostraba el artista equivocado en pistas anteriores' },
+          { type: 'fix', text: '🎵 La barra de progreso ya no muestra un 35% falso cuando no se conoce la duración' },
+          { type: 'fix', text: '🔢 Números de versión sincronizados en todas partes' },
+          { type: 'add', text: '🎧 Inicio de sesión opcional con la API Web de Spotify: carátula, barra de progreso y tiempos reales (PKCE, sin clave secreta)' },
+          { type: 'add', text: '🖼 Carátula en reproducidas recientemente' },
+          { type: 'imp', text: '⚙️ Procesos principales: nombres limpios (sin .exe) y tarjeta a ancho completo' },
+          { type: 'imp', text: '🎨 Botones de ventana (minimizar / maximizar / cerrar) con color' },
+          { type: 'imp', text: '🔲 Aspecto de esquinas rectas en toda la app, como una ventana normal de Windows' },
+          { type: 'rem', text: '🎙 Asistente de voz F.R.I.D.A.Y. AI y sus comandos (run_command, kill_process, open_url)' },
+          { type: 'rem', text: '📊 Ventana de estadísticas de Spotify y tarjeta de letras' },
+          { type: 'rem', text: '🚀 Lanzador de image_upscaler.py en Image Tools' },
+          { type: 'rem', text: '🔄 Tarjeta de traducción IA oculta de la interfaz (el código se conserva)' },
+        ],
+      },
+      {
+        ver: 'v4.1.0', date: 'Multiplataforma',
+        items: [
+          { type: 'add', text: '🐧 Soporte completo de Linux: Spotify vía playerctl/D-Bus, acciones de energía vía systemctl, selector de carpetas vía zenity/kdialog' },
+          { type: 'add', text: '🍎 Soporte completo de macOS: Spotify vía AppleScript, acciones de energía vía System Events, selector de carpetas vía osascript' },
+          { type: 'imp', text: '🔨 GitHub Actions compila Windows + macOS (Intel y Apple Silicon) + Linux en paralelo' },
+          { type: 'fix', text: '🐛 Filtro de procesos actualizado para nombres de procesos Unix' },
+          { type: 'fix', text: '🐛 "Iniciar con Windows" ahora es "Iniciar con el sistema"' },
+        ],
+      },
+      {
+        ver: 'v4.0.0', date: 'JARVIS → F.R.I.D.A.Y.',
         items: [
           { type: 'add', text: '🤖 Renombrado: JARVIS → F.R.I.D.A.Y. (Female Replacement Intelligent Digital Assistant Youth)' },
           { type: 'add', text: '🎙 F.R.I.D.A.Y. AI — Asistente de voz en tiempo real con OpenAI Realtime API (WebRTC, gpt-4o-realtime-preview)' },
@@ -430,11 +526,12 @@ export interface I18n {
   recentlyPlayed: string;
   visualizer: string;
   musicService: string;
-  stats: string;
   demoMode: string;
   uptime: string;
   free: string;
   perfEcoInfo: string;
+  idleResume: string;
+  timerStartHint: string;
   perfNormalInfo: string;
   perfTurboInfo: string;
   topProcesses: string;
@@ -560,12 +657,13 @@ export function useSystemData() {
       setIsDemo(false);
       setCpuHist(h => pushHistory(h, s.cpu_percent));
       setRamHist(h => pushHistory(h, s.ram_percent));
+      setGpuHist(h => pushHistory(h, s.gpu_temp ?? 0));
     } else {
       const t = mockTick.current;
       const mockCpu = 25 + Math.sin(t * 0.12) * 18 + Math.random() * 5;
       const mockRam = 58 + Math.sin(t * 0.07) * 12;
-      const mockGpu = 40 + Math.sin(t * 0.09) * 20;
-      setSys(prev => ({ ...prev, cpu_percent: mockCpu, ram_percent: mockRam, disk_percent: 55, disk_free_gb: 220, uptime_secs: prev.uptime_secs + 1, cpu_temp: 68, gpu_temp: 72, ram_used_gb: 9.3, ram_total_gb: 16 }));
+      const mockGpu = 65 + Math.sin(t * 0.09) * 8;
+      setSys(prev => ({ ...prev, cpu_percent: mockCpu, ram_percent: mockRam, disk_percent: 55, disk_free_gb: 220, uptime_secs: prev.uptime_secs + 1, cpu_temp: 68, gpu_temp: Math.round(mockGpu), ram_used_gb: 9.3, ram_total_gb: 16 }));
       setIsDemo(true);
       setCpuHist(h => pushHistory(h, mockCpu));
       setRamHist(h => pushHistory(h, mockRam));
@@ -608,19 +706,7 @@ export function useSystemData() {
       // Web API when connected, otherwise the old window-title detection
       const sp = (await inv<SpotifyInfo>('get_spotify_api')) ?? (await inv<SpotifyInfo>('get_spotify'));
       if (sp) {
-        setSpotify(prev => {
-          if (sp.playing && sp.track && sp.track !== prev.track) {
-            const STATS_KEY = 'friday_spotify_stats';
-            try {
-              const data = JSON.parse(localStorage.getItem(STATS_KEY) || '{"plays":[]}');
-              const now = Date.now();
-              const d = new Date(now); const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1);
-              data.plays = [{ track: sp.track, artist: sp.artist, ts: now, weekKey: d.toISOString().slice(0,10), monthKey: new Date(now).toISOString().slice(0,7) }, ...data.plays].slice(0, 2000);
-              localStorage.setItem(STATS_KEY, JSON.stringify(data));
-            } catch {}
-          }
-          return sp;
-        });
+        setSpotify(sp);
       }
     }
 
@@ -643,11 +729,22 @@ export function useSystemData() {
   // ── Auto-detection of performance mode ──────────────────────────────────────
   const autoModeDetectionId = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // If the user picks a mode by hand, Auto Mode leaves it alone for 10 minutes
+  const lastAutoSet     = useRef<string | null>(null);
+  const autoPausedUntil = useRef(0);
+  const perfModeSeen    = useRef(false);
+  useEffect(() => {
+    if (!perfModeSeen.current) { perfModeSeen.current = true; return; } // skip the first render
+    if (settings.perfMode !== lastAutoSet.current) autoPausedUntil.current = Date.now() + 10 * 60 * 1000;
+  }, [settings.perfMode]);
+
   const detectAutoMode = useCallback(async () => {
     if (!settings.autoModeEnabled || settings.manualLock) return;
-    
+    if (Date.now() < autoPausedUntil.current) return;
+
     const mode = await inv<string>('detect_auto_performance_mode');
     if (mode && mode !== settings.perfMode) {
+      lastAutoSet.current = mode;
       updateSettings({ perfMode: mode as PerfMode });
     }
   }, [settings.autoModeEnabled, settings.manualLock, settings.perfMode, updateSettings]);

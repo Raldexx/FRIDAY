@@ -6,12 +6,11 @@ import { Modal } from '@/components/ui/Modal';
 import { MetricCard } from '@/components/MetricCard';
 import { ChartModal } from '@/components/ChartModal';
 import { SpotifyPanel } from '@/components/SpotifyPanel';
-import { TranslatorCard } from '@/components/TranslatorCard';
 import { fmtSpeed, fmtTemp, fmtUptime, cn } from '@/lib/utils';
 import { ICARDI_IMG, ICARDI_IMG2 } from '@/assets/icardi';
 import { MADISON_IMG, MADISON_IMG2 } from '@/assets/madison';
 
-type ModalType = 'chart' | 'spotify' | 'settings' | 'stats' | 'actions' | 'changelog' | 'notes' | 'timer' | 'premium' | 'worldclock' | 'imagetools' | null;
+type ModalType = 'chart' | 'spotify' | 'settings' | 'actions' | 'changelog' | 'notes' | 'timer' | 'premium' | 'worldclock' | 'imagetools' | null;
 type ChartKey = 'cpu' | 'ram' | 'gpu' | 'net' | 'disk';
 type ArtistTheme = 'madison' | 'icardi' | null;
 
@@ -213,18 +212,6 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
   const [sortMode, setSortMode]       = useState<'copy'|'move'>('copy');
   const [sortStatus, setSortStatus]   = useState('');
   const [sortRunning, setSortRunning] = useState(false);
-  const [pythonVer, setPythonVer]     = useState('');
-
-  useEffect(() => {
-    if (!open) return;
-    (async () => {
-      try {
-        const { invoke } = await import('@tauri-apps/api/core');
-        const v = await invoke<string>('check_python');
-        setPythonVer(v || 'not_found');
-      } catch { setPythonVer('not_found'); }
-    })();
-  }, [open]);
 
   function loadFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
@@ -305,18 +292,8 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
     setSortRunning(false);
   }
 
-  async function launchCLI() {
-    try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      const result = await invoke<string>('open_image_tools_cli');
-      setSortStatus('✅ ' + result);
-    } catch (e: unknown) {
-      setSortStatus('❌ ' + (e instanceof Error ? e.message : String(e)));
-    }
-  }
-
   // Shared styles
-  const panelBg: React.CSSProperties  = tc ? { background:'rgba(255,255,255,0.05)', borderRadius:12, padding:10 } : { background:'rgba(0,0,0,0.03)', borderRadius:12, padding:10 };
+  const panelBg: React.CSSProperties  = tc ? { background:'rgba(255,255,255,0.05)', borderRadius:2, padding:10 } : { background:'rgba(0,0,0,0.03)', borderRadius:2, padding:10 };
   const inputCls = cn('w-full px-2.5 py-1.5 rounded-lg border text-[11px] focus:outline-none',
     tc ? 'bg-white/5 border-white/10 text-white placeholder-white/30' : 'bg-white dark:bg-[#1c1c1e] border-black/[0.08] dark:border-white/[0.1] text-[#1a1a1a] dark:text-[#e8e8ea]');
   const btnPrimary = cn('py-2 rounded-xl text-[11px] font-bold transition-all');
@@ -355,7 +332,7 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
         </label>
         {img && <>
           <div className="rounded-xl overflow-hidden flex items-center justify-center mb-3" style={{...panelBg, minHeight:130, maxHeight:200, padding:0}}>
-            <img src={img} alt="preview" style={{maxHeight:195,maxWidth:'100%',filter:getFilter(),borderRadius:10,transition:'filter 0.25s'}}/>
+            <img src={img} alt="preview" style={{maxHeight:195,maxWidth:'100%',filter:getFilter(),borderRadius:2,transition:'filter 0.25s'}}/>
           </div>
           <div className="grid grid-cols-3 gap-1.5 mb-2">
             {editOps.map(o=>(
@@ -377,7 +354,7 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
 
       {/* ── UPSCALE TAB ── */}
       {tab==='upscale' && <div className="flex flex-col gap-3">
-        <div className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Browser upscale (Lanczos-quality) — for Smart/Photo/Sharpen algorithms use the CLI below.</span></div>
+        <div className="text-[11px]" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Browser-side upscaling (Lanczos-quality).</span></div>
         <label className={cn('flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer no-drag',
           tc?'border-white/15 hover:border-white/30':'border-black/[0.10] dark:border-white/[0.12]')}>
           <Image size={14} style={tc?{color:tc.textMuted}:{}} className={!tc?'text-black/30':''}/>
@@ -399,17 +376,6 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
           className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]',(!img||processing)&&'opacity-40 cursor-not-allowed')}>
           {processing?'⏳ Processing...':`🔍 Upscale ×${upscaleScale} & Download`}
         </button>
-        {/* CLI launcher */}
-        <div style={panelBg}>
-          <div className="text-[10px] font-bold mb-2" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/50 dark:text-white/50':''}>Advanced CLI (Smart/Photo/Sharpen algorithms)</span></div>
-          <div className="text-[10px] mb-2" style={tc?{color:tc.textMuted}:{}}><span className={!tc?'text-black/40 dark:text-white/40':''}>Python: <span className="font-mono">{pythonVer==='not_found'?'❌ Not found':pythonVer}</span></span></div>
-          <button onClick={launchCLI}
-            style={tc?{background:tc.accent,color:'#000'}:undefined}
-            className={cn(btnPrimary,'w-full',!tc&&'bg-[#1a1a1a] dark:bg-[#e8e8ea] text-white dark:text-[#1a1a1a]')}>
-            🚀 Launch image_upscaler.py in Terminal
-          </button>
-          {sortStatus&&<div className="mt-2 text-[10px]" style={tc?{color:tc.textMuted}:{}}>{sortStatus}</div>}
-        </div>
       </div>}
 
       {/* ── SORT TAB ── */}
@@ -457,14 +423,6 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
           {sortRunning?'⏳ Sorting files...':'📂 Sort Files Now'}
         </button>
         {sortStatus&&<div className="text-[11px] p-2.5 rounded-xl font-mono" style={tc?{background:'rgba(255,255,255,0.05)',color:tc.textMuted}:{background:'rgba(0,0,0,0.04)',color:'rgba(0,0,0,0.5)'}}>{sortStatus}</div>}
-        {/* Advanced CLI */}
-        <div style={panelBg}>
-          <div className="text-[10px] font-bold mb-1" style={tc?{color:tc.accent}:{}}><span className={!tc?'text-black/50':''}>Full CLI (upscale + sort)</span></div>
-          <button onClick={launchCLI} style={tc?{background:'rgba(255,255,255,0.10)',color:tc.textPrimary}:undefined}
-            className={cn('w-full py-1.5 rounded-lg text-[10px] font-bold',!tc&&'bg-black/[0.06] dark:bg-white/[0.08] text-black/50 dark:text-white/50')}>
-            🖥 Launch image_upscaler.py in Terminal
-          </button>
-        </div>
       </div>}
 
       <button onClick={onClose} style={tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
@@ -484,7 +442,7 @@ function PremiumModal({ open, onClose, t, tc }: { open:boolean; onClose:()=>void
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">👑</div>
         <div className="text-center">
           <div className="text-[16px] font-extrabold mb-1" style={{color:tc?tc.textPrimary:undefined}}><span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>F.R.I.D.A.Y. Premium</span></div>
-          <div className="text-[12px]" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40 max-w-[260px]':''}>Unlock advanced features: Spotify lyrics, custom themes, cloud sync and more.</span></div>
+          <div className="text-[12px]" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40 max-w-[260px]':''}>Unlock advanced features: custom themes, cloud sync and more.</span></div>
         </div>
         <div className="w-full rounded-2xl border p-4" style={tc?{background:'rgba(251,191,36,0.08)',borderColor:'rgba(251,191,36,0.25)'}:{background:'rgb(255,251,235)',borderColor:'rgb(253,230,138)'}}>
           <div className="text-[11px] font-bold mb-2 text-amber-600 dark:text-amber-400">Want Premium access?</div>
@@ -841,7 +799,7 @@ export default function App() {
             {[
               { label:'CPU', value:`${Math.round(sys.cpu_percent)}%`, color:'#3b82f6' },
               { label:'RAM', value:`${Math.round(sys.ram_percent)}%`, color:'#8b5cf6' },
-              { label:'GPU', value:`${Math.round(0)}%`,             color:'#f59e0b' },
+              { label:'GPU', value:fmtTemp(sys.gpu_temp),             color:'#f59e0b' },
             ].map(({label,value,color})=>(
               <div key={label} className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl border"
                 style={tc
@@ -855,7 +813,7 @@ export default function App() {
 
           {/* Hint */}
           <div className="text-[10px] font-medium" style={{color:tc?tc.textMuted:'rgba(255,255,255,0.3)'}}>
-            Devam etmek için tıkla
+            {t.idleResume}
           </div>
         </div>
       )}
@@ -870,7 +828,7 @@ export default function App() {
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[20px] font-extrabold tracking-tight" style={tc?{color:tc.textPrimary}:{}}>
                 <span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>F.R.I.D.A.Y.</span>
-                <span className="text-[13px] font-normal ml-1" style={muted()}><span className={!tc?'text-black/20 dark:text-white/20':''}>v4.0</span></span>
+                <span className="text-[13px] font-normal ml-1" style={muted()}><span className={!tc?'text-black/20 dark:text-white/20':''}>v4.2</span></span>
               </span>
               <AnimatePresence mode="wait">
                 <motion.div key={settings.perfMode}
@@ -897,15 +855,13 @@ export default function App() {
             <div className="text-[10px]" style={muted()}><span className={!tc?'text-black/30 dark:text-white/30':''}>🌤 {weather}</span></div>
             <div className="flex gap-1 no-drag mt-0.5">
               {[
-                {icon:<Minus size={8}/>, action:()=>getWin().then(w=>w.minimize())},
-                {icon:<Maximize2 size={8}/>, action:()=>getWin().then(w=>w.isMaximized().then(m=>m?w.unmaximize():w.maximize()))},
-                {icon:<X size={8}/>, action:()=>getWin().then(w=>w.close()), close:true},
+                {icon:<Minus size={9} strokeWidth={3}/>,     title:'Minimize', color:'#febc2e', action:()=>getWin().then(w=>w.minimize())},
+                {icon:<Maximize2 size={8} strokeWidth={3}/>, title:'Maximize', color:'#28c840', action:()=>getWin().then(w=>w.isMaximized().then(m=>m?w.unmaximize():w.maximize()))},
+                {icon:<X size={9} strokeWidth={3}/>,         title:'Close',    color:'#ff5f57', action:()=>getWin().then(w=>w.close())},
               ].map((btn,i)=>(
-                <button key={i} onClick={btn.action}
-                  className={cn('w-5 h-5 rounded-full flex items-center justify-center transition-colors',
-                    btn.close ? 'bg-black/05 dark:bg-white/08 text-black/30 dark:text-white/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500'
-                              : 'bg-black/05 dark:bg-white/08 text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/15')}
-                  style={tc?{background:'rgba(255,255,255,0.08)',color:tc.textMuted}:{}}>{btn.icon}</button>
+                <button key={i} onClick={btn.action} title={btn.title}
+                  className="w-5 h-5 rounded-sm flex items-center justify-center text-black/60 hover:brightness-110 active:brightness-90 transition-[filter]"
+                  style={{background:btn.color}}>{btn.icon}</button>
               ))}
             </div>
           </div>
@@ -922,7 +878,7 @@ export default function App() {
 
         {/* ═══ GPU + NETWORK ═══ */}
         <div className="grid grid-cols-2 gap-2">
-          <MetricCard label="GPU" value={`${Math.round(0)}%`} sub={fmtTemp(sys.gpu_temp)} color="#f59e0b" history={gpuHist} onClick={()=>openChart('gpu')} tc={tc} />
+          <MetricCard label="GPU" value={fmtTemp(sys.gpu_temp)} sub="temperature" color="#f59e0b" history={gpuHist} onClick={()=>openChart('gpu')} tc={tc} />
           <MetricCard label="NETWORK" value={fmtSpeed(net.dlSpeed)} sub={`↑ ${fmtSpeed(net.ulSpeed)}`} color="#10b981" history={netHist} onClick={()=>openChart('net')} tc={tc} />
         </div>
 
@@ -947,9 +903,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* ═══ TRANSLATOR + TOP PROCESSES ═══ */}
-        <div className="grid grid-cols-2 gap-2">
-          <TranslatorCard tc={tc} apiKey="" />
+        {/* ═══ TOP PROCESSES ═══ */}
+        {/* AI Translator card is hidden for now: components/TranslatorCard.tsx is kept for the planned DeepL rework */}
+        <div className="grid grid-cols-1 gap-2">
           <div style={cardStyle()} className={cardCls}>
             <div className="text-[9px] font-bold tracking-[0.14em] mb-2" style={{color:tc?tc.accent:undefined,textShadow:tc?'0 1px 5px rgba(0,0,0,0.9)':undefined}}><span className={!tc?'text-black/30 dark:text-white/30':''}>{t.topProcesses}</span></div>
             <div className="flex flex-col gap-1.5">
@@ -958,7 +914,7 @@ export default function App() {
                 : procs.slice(0,5).map(p=>(
                   <div key={p.pid} className="flex items-center gap-2 border-b pb-1.5 last:border-0 last:pb-0" style={tc?{borderColor:'rgba(255,255,255,0.05)'}:{borderColor:'rgba(0,0,0,0.04)'}}>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-semibold truncate" style={tc?{color:tc.textPrimary}:{}}><span className={!tc?'text-[#333] dark:text-[#ccc]':''}>{p.name}</span></div>
+                      <div className="text-[10px] font-semibold truncate" style={tc?{color:tc.textPrimary}:{}}><span className={!tc?'text-[#333] dark:text-[#ccc]':''}>{p.name.replace(/\.exe$/i,'')}</span></div>
                       <div className="h-[2px] rounded-full mt-0.5 overflow-hidden" style={{background:tc?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.05)'}}>
                         <div className="h-full rounded-full transition-all duration-300" style={{width:`${Math.min(100,p.cpu_percent)}%`,background:tc?tc.sparkline:'#3b82f6'}} />
                       </div>
@@ -1005,7 +961,7 @@ export default function App() {
                 <span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>00:00</span>
               </div>
               <div className="text-[9px]" style={muted()}>
-                <span className={!tc?'text-black/25 dark:text-white/25':''}>Başlamak için tıkla</span>
+                <span className={!tc?'text-black/25 dark:text-white/25':''}>{t.timerStartHint}</span>
               </div>
             </div>
             <div className="absolute top-3 right-3 text-[9px] font-bold" style={muted()}><span className={!tc?'text-black/20 dark:text-white/20':''}>↗</span></div>
