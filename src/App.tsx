@@ -6,13 +6,12 @@ import { Modal } from '@/components/ui/Modal';
 import { MetricCard } from '@/components/MetricCard';
 import { ChartModal } from '@/components/ChartModal';
 import { SpotifyPanel } from '@/components/SpotifyPanel';
-import { FridayAI } from '@/components/JarvisAI';
 import { TranslatorCard } from '@/components/TranslatorCard';
 import { fmtSpeed, fmtTemp, fmtUptime, cn } from '@/lib/utils';
 import { ICARDI_IMG, ICARDI_IMG2 } from '@/assets/icardi';
 import { MADISON_IMG, MADISON_IMG2 } from '@/assets/madison';
 
-type ModalType = 'chart' | 'spotify' | 'settings' | 'stats' | 'actions' | 'changelog' | 'notes' | 'timer' | 'premium' | 'worldclock' | 'imagetools' | 'jarvis' | null;
+type ModalType = 'chart' | 'spotify' | 'settings' | 'stats' | 'actions' | 'changelog' | 'notes' | 'timer' | 'premium' | 'worldclock' | 'imagetools' | null;
 type ChartKey = 'cpu' | 'ram' | 'gpu' | 'net' | 'disk';
 type ArtistTheme = 'madison' | 'icardi' | null;
 
@@ -861,44 +860,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── ECO MODE OVERLAY (same as idle) ────────────────────────────────── */}
-      {settings.perfMode === 'eco' && !isIdle && (
-        <div
-          className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6"
-          style={{
-            background: tc ? 'rgba(0,0,0,0.82)' : (settings.darkTheme ? 'rgba(10,10,12,0.92)' : 'rgba(240,240,245,0.92)'),
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-          }}
-        >
-          {/* Big clock */}
-          <div className="font-mono text-[52px] font-black tabular-nums tracking-tight" style={{color:tc?tc.accent:undefined}}
-            ><span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>{clock}</span></div>
-
-          {/* Mini metrics row */}
-          <div className="flex gap-3">
-            {[
-              { label:'CPU', value:`${Math.round(sys.cpu_percent)}%`, color:'#3b82f6' },
-              { label:'RAM', value:`${Math.round(sys.ram_percent)}%`, color:'#8b5cf6' },
-              { label:'GPU', value:`${Math.round(0)}%`,             color:'#f59e0b' },
-            ].map(({label,value,color})=>(
-              <div key={label} className="flex flex-col items-center gap-1 px-4 py-3 rounded-2xl border"
-                style={tc
-                  ?{background:tc.cardBg,borderColor:tc.cardBorder}
-                  :{background:'rgba(255,255,255,0.08)',borderColor:'rgba(255,255,255,0.12)'}}>
-                <div className="text-[8px] font-bold tracking-[0.12em]" style={{color: tc?tc.textMuted:'rgba(255,255,255,0.4)'}}>{label}</div>
-                <div className="text-[22px] font-extrabold tabular-nums font-mono" style={{color}}>{value}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Eco mode indicator */}
-          <div className="text-[10px] font-medium" style={{color:tc?tc.textMuted:'rgba(255,255,255,0.3)'}}>
-            🌿 {t.perfEcoInfo}
-          </div>
-        </div>
-      )}
-
       {/* Scrollable content layer */}
       <div className="friday-scroll">
 
@@ -1069,18 +1030,6 @@ export default function App() {
             </button>
           ))}
         </div>
-        <button onClick={()=>setModal('jarvis')}
-          style={tc?{background:tc.cardBg,borderColor:tc.cardBorder}:undefined}
-          className={cn('w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-bold tracking-[0.08em] transition-all duration-150 border no-drag',
-            !tc&&'bg-white dark:bg-[#1c1c1e] border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]',
-            tc&&'hover:opacity-80')}>
-          <span style={{fontSize:16}}>🤖</span>
-          <span style={tc?{color:tc.accent}:{}} className={!tc?'text-blue-500 dark:text-blue-400':''}>F.R.I.D.A.Y. AI</span>
-          <span className="text-[9px] font-normal px-1.5 py-0.5 rounded-full"
-            style={tc?{background:tc.accent+'30',color:tc.accent}:{background:'rgba(59,130,246,0.12)',color:'#3b82f6'}}>
-            Realtime
-          </span>
-        </button>
         <button onClick={()=>setModal('actions')}
           style={tc?{background:tc.cardBg,borderColor:tc.cardBorder,color:tc.textPrimary}:undefined}
           className={cn('w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-bold tracking-[0.06em] transition-all duration-150 border no-drag',
@@ -1283,7 +1232,6 @@ export default function App() {
         <PremiumModal open={modal==='premium'} onClose={()=>setModal(null)} t={t} tc={tc} />
         <TourModal open={showTour} onClose={closeTour} t={t} tc={tc} />
         <TimerModal open={modal==='timer'} onClose={()=>setModal(null)} t={t} tc={tc} />
-        <FridayAI open={modal==='jarvis'} onClose={()=>setModal(null)} tc={tc} perfMode={settings.perfMode} language={settings.language} />
 
       </div>{/* end scrollable */}
     </div>

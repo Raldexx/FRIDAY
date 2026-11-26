@@ -604,42 +604,6 @@ pub fn sort_files(folder: String, output: String, mode: String) -> Result<String
     }
 }
 
-// ── URL / Process / Shell ─────────────────────────────────────────────────────
-
-#[tauri::command]
-pub fn open_url(url: String) -> Result<String, String> {
-    #[cfg(target_os = "windows")]
-    std::process::Command::new("cmd").args(["/c", "start", "", &url]).spawn().map_err(|e| e.to_string())?;
-    #[cfg(target_os = "macos")]
-    std::process::Command::new("open").arg(&url).spawn().map_err(|e| e.to_string())?;
-    #[cfg(target_os = "linux")]
-    std::process::Command::new("xdg-open").arg(&url).spawn().map_err(|e| e.to_string())?;
-    Ok(format!("Opened: {url}"))
-}
-
-#[tauri::command]
-pub fn kill_process(name: String) -> Result<String, String> {
-    #[cfg(target_os = "windows")]
-    {
-        let out = std::process::Command::new("taskkill").args(["/F", "/IM", &name]).output().map_err(|e| e.to_string())?;
-        return Ok(String::from_utf8_lossy(&out.stdout).to_string());
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let out = std::process::Command::new("pkill").arg("-f").arg(&name).output().map_err(|e| e.to_string())?;
-        return Ok(String::from_utf8_lossy(&out.stdout).to_string());
-    }
-}
-
-#[tauri::command]
-pub fn run_command(command: String) -> Result<String, String> {
-    #[cfg(target_os = "windows")]
-    let out = std::process::Command::new("cmd").args(["/c", &command]).output().map_err(|e| e.to_string())?;
-    #[cfg(not(target_os = "windows"))]
-    let out = std::process::Command::new("sh").args(["-c", &command]).output().map_err(|e| e.to_string())?;
-    Ok(String::from_utf8_lossy(&out.stdout).to_string())
-}
-
 // ── Active Window Detection ───────────────────────────────────────────────────
 
 #[tauri::command]

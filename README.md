@@ -53,16 +53,6 @@ No client secret is used (PKCE). Tokens are stored in the app data folder. Witho
 - Language preference saved to local storage
 - All UI text, settings labels, and changelog entries change with the selected language
 
-### 🤖 F.R.I.D.A.Y. AI
-- Real-time voice assistant powered by **OpenAI Realtime API** (WebRTC, `gpt-4o-realtime-preview`)
-- Animated 72-bar audio ring visualizer reacting to mic volume
-- Protocol commands: start / work / gaming / night protocol
-- Semantic memory — automatically learns facts and preferences from conversations
-- Google Meet integration: generates Obsidian `.md` note template + AI meeting summary
-- Google Drive / Calendar accessible directly via F.R.I.D.A.Y. AI
-- Voice commands automatically disabled in Eco performance mode
-- Whisper language follows the app's language setting (TR / EN / ES)
-
 ### 🔄 AI Translator Card
 - Inline translation card replacing the old System Info card
 - Supports 8 languages with automatic debounce (no button needed)
@@ -263,7 +253,6 @@ FRIDAY/
 │   ├── store/
 │   │   └── system.ts           ← Data hook + i18n (EN/TR/ES) + settings
 │   ├── components/
-│   │   ├── JarvisAI.tsx        ← F.R.I.D.A.Y. AI voice assistant
 │   │   ├── MetricCard.tsx
 │   │   ├── ChartModal.tsx
 │   │   ├── SpotifyPanel.tsx
@@ -290,7 +279,6 @@ FRIDAY/
 - **Spotify detection** works on all platforms — see platform notes above
 - **GPU temperature** depends on hardware and driver support via `sysinfo`
 - **Session history** in the Music panel resets when F.R.I.D.A.Y. is closed
-- **F.R.I.D.A.Y. AI** requires an OpenAI API key with Realtime API access
 - Build may take 5–15 minutes on first run as Rust compiles all dependencies
 
 ---
