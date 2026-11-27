@@ -4,18 +4,6 @@
 
 ---
 
-> **📢 Honest Note**
->
-> I'm not very experienced with Rust, so I heavily relied on AI assistance (Claude) throughout
-> this project — especially for the Rust backend, platform-specific API calls, and Tauri configuration.
-> The overall architecture, design decisions, and UI were driven by me, but the low-level
-> systems code was largely AI-generated and iteratively debugged. No shame in that. 🤖
->
-> Original concept and v1 ([JARVIS v1](https://github.com/Raldexx/jarvis-v1)) was written in Python/PyQt6.
-> This is a full rewrite for a lighter, faster, native-feeling experience via Tauri.
-
----
-
 ## ✨ Features
 
 ### 📊 System Monitoring
