@@ -27,6 +27,7 @@ export interface ProcessInfo {
   cpu_percent: number;
   mem_percent: number;
   pid:         number;
+  exe?:        string | null;
 }
 
 export interface SpotifyInfo {
@@ -111,8 +112,6 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     perfTurboInfo: 'All metrics · 500ms refresh · max accuracy',
     topProcesses: 'TOP PROCESSES',
     ecoNoSpotify: 'Spotify tracking paused in Eco mode',
-    premium: 'Premium',
-    premiumTitle: 'PREMIUM',
     timer: 'Timer',
     worldClock: 'World Clock',
     searchCity: 'Search city...',
@@ -148,7 +147,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
           { type: 'add', text: '🖼 Album art in recently played' },
           { type: 'imp', text: '⚙️ Top processes: clean names (no .exe) and a full-width card' },
           { type: 'imp', text: '🎨 Window buttons (minimize / maximize / close) are now colored' },
-          { type: 'imp', text: '🔲 Square-corner look across the whole app, like a normal Windows window' },
+          { type: 'imp', text: '🔲 The app window now has square corners (cards and buttons keep their modern rounded look)' },
+          { type: 'fix', text: '🔔 System tray fixed: one icon instead of two, proper "F.R.I.D.A.Y." name and tooltip, left click shows/hides (also restores a minimized window)' },
+          { type: 'fix', text: '🌐 Network speed was calculated wrongly — now measured per second' },
+          { type: 'add', text: '🧩 App icons next to names in Top Processes' },
+          { type: 'imp', text: '⚡ Faster and lighter: no more UI freezes from polling, disks/sensors read every 5 s, one shared process scan, polling pauses while the window is hidden or minimized' },
+          { type: 'rem', text: '👑 Premium section removed' },
           { type: 'rem', text: '🎙 F.R.I.D.A.Y. AI voice assistant and its commands (run_command, kill_process, open_url)' },
           { type: 'rem', text: '📊 Spotify stats window and the lyrics card' },
           { type: 'rem', text: '🚀 image_upscaler.py launcher in Image Tools' },
@@ -252,8 +256,6 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     perfTurboInfo: 'Tüm metrikler · 500ms yenileme · maksimum hassasiyet',
     topProcesses: 'EN YOĞUN İŞLEMLER',
     ecoNoSpotify: 'Eco modda Spotify takibi duraklatıldı',
-    premium: 'Premium',
-    premiumTitle: 'PREMİUM',
     timer: 'Zamanlayıcı',
     worldClock: 'Dünya Saati',
     searchCity: 'Şehir ara...',
@@ -289,7 +291,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
           { type: 'add', text: '🖼 Son çalınanlarda albüm kapağı' },
           { type: 'imp', text: '⚙️ En yoğun işlemler: sade isimler (.exe yok) ve tam genişlik kart' },
           { type: 'imp', text: '🎨 Pencere düğmeleri (küçült / büyüt / kapat) renklendirildi' },
-          { type: 'imp', text: '🔲 Tüm uygulamada köşeli görünüm, normal bir Windows penceresi gibi' },
+          { type: 'imp', text: '🔲 Uygulama penceresi artık köşeli (kartlar ve butonlar modern yuvarlak görünümünü koruyor)' },
+          { type: 'fix', text: '🔔 Görev tepsisi düzeltildi: iki yerine tek simge, düzgün "F.R.I.D.A.Y." adı ve ipucu, sol tık göster/gizle (küçültülmüş pencereyi de geri getirir)' },
+          { type: 'fix', text: '🌐 Ağ hızı yanlış hesaplanıyordu — artık saniye başına ölçülüyor' },
+          { type: 'add', text: '🧩 En yoğun işlemlerde isimlerin yanında uygulama simgeleri' },
+          { type: 'imp', text: '⚡ Daha hızlı ve hafif: yoklamadan kaynaklanan arayüz donmaları bitti, disk/sensörler 5 sn\'de bir okunuyor, tek ortak işlem taraması, pencere gizliyken ya da küçültülmüşken yoklama duruyor' },
+          { type: 'rem', text: '👑 Premium bölümü kaldırıldı' },
           { type: 'rem', text: '🎙 F.R.I.D.A.Y. AI sesli asistanı ve komutları (run_command, kill_process, open_url)' },
           { type: 'rem', text: '📊 Spotify istatistik penceresi ve şarkı sözü kartı' },
           { type: 'rem', text: '🚀 Image Tools içindeki image_upscaler.py başlatıcısı' },
@@ -393,8 +400,6 @@ export const TRANSLATIONS: Record<Language, I18n> = {
     perfTurboInfo: 'Todas las métricas · 500ms · máxima precisión',
     topProcesses: 'PROCESOS PRINCIPALES',
     ecoNoSpotify: 'Seguimiento de Spotify pausado en modo Eco',
-    premium: 'Premium',
-    premiumTitle: 'PREMIUM',
     timer: 'Temporizador',
     worldClock: 'Reloj Mundial',
     searchCity: 'Buscar ciudad...',
@@ -430,7 +435,12 @@ export const TRANSLATIONS: Record<Language, I18n> = {
           { type: 'add', text: '🖼 Carátula en reproducidas recientemente' },
           { type: 'imp', text: '⚙️ Procesos principales: nombres limpios (sin .exe) y tarjeta a ancho completo' },
           { type: 'imp', text: '🎨 Botones de ventana (minimizar / maximizar / cerrar) con color' },
-          { type: 'imp', text: '🔲 Aspecto de esquinas rectas en toda la app, como una ventana normal de Windows' },
+          { type: 'imp', text: '🔲 La ventana de la app ahora tiene esquinas rectas (tarjetas y botones conservan su aspecto redondeado moderno)' },
+          { type: 'fix', text: '🔔 Bandeja del sistema corregida: un solo icono en lugar de dos, nombre e indicación "F.R.I.D.A.Y." correctos, clic izquierdo muestra/oculta (también restaura una ventana minimizada)' },
+          { type: 'fix', text: '🌐 La velocidad de red se calculaba mal — ahora se mide por segundo' },
+          { type: 'add', text: '🧩 Iconos de las apps junto a los nombres en Procesos principales' },
+          { type: 'imp', text: '⚡ Más rápido y ligero: sin bloqueos de la interfaz, discos/sensores cada 5 s, un único escaneo de procesos compartido, el sondeo se pausa con la ventana oculta o minimizada' },
+          { type: 'rem', text: '👑 Sección Premium eliminada' },
           { type: 'rem', text: '🎙 Asistente de voz F.R.I.D.A.Y. AI y sus comandos (run_command, kill_process, open_url)' },
           { type: 'rem', text: '📊 Ventana de estadísticas de Spotify y tarjeta de letras' },
           { type: 'rem', text: '🚀 Lanzador de image_upscaler.py en Image Tools' },
@@ -536,8 +546,6 @@ export interface I18n {
   perfTurboInfo: string;
   topProcesses: string;
   ecoNoSpotify: string;
-  premium: string;
-  premiumTitle: string;
   timer: string;
   worldClock: string;
   searchCity: string;
@@ -628,8 +636,6 @@ export function useSystemData() {
   const [gpuHist, setGpuHist] = useState(makeHistory());
   const [netHist, setNetHist] = useState(makeHistory());
 
-  const prevRecv   = useRef(0);
-  const prevSent   = useRef(0);
   const weatherTs  = useRef(0);
   const mockTick   = useRef(0);
   const sysInfoFetched = useRef(false);
@@ -673,10 +679,9 @@ export function useSystemData() {
     if (mode.net) {
       const n = await inv<NetworkStats>('get_network_stats');
       if (n) {
-        const dl = Math.max(0, n.download_bytes - prevRecv.current) / 1024;
-        const ul = Math.max(0, n.upload_bytes   - prevSent.current) / 1024;
-        prevRecv.current = n.download_bytes;
-        prevSent.current = n.upload_bytes;
+        // Rust sends bytes per second since the previous call
+        const dl = n.download_bytes / 1024;
+        const ul = n.upload_bytes   / 1024;
         setNet({ dlSpeed: dl, ulSpeed: ul, totalRecvMb: n.total_recv_mb, totalSentMb: n.total_sent_mb, download_bytes: n.download_bytes, upload_bytes: n.upload_bytes });
         setNetHist(h => pushHistory(h, dl));
       }
@@ -741,6 +746,7 @@ export function useSystemData() {
   const detectAutoMode = useCallback(async () => {
     if (!settings.autoModeEnabled || settings.manualLock) return;
     if (Date.now() < autoPausedUntil.current) return;
+    if (document.hidden) return; // window hidden/minimized: nothing to save
 
     const mode = await inv<string>('detect_auto_performance_mode');
     if (mode && mode !== settings.perfMode) {
@@ -758,8 +764,8 @@ export function useSystemData() {
     // Run detection immediately
     detectAutoMode();
     
-    // Then every 2 seconds
-    autoModeDetectionId.current = setInterval(detectAutoMode, 2000);
+    // Then every 5 seconds
+    autoModeDetectionId.current = setInterval(detectAutoMode, 5000);
     
     return () => {
       if (autoModeDetectionId.current) clearInterval(autoModeDetectionId.current);
@@ -768,13 +774,23 @@ export function useSystemData() {
 
   useEffect(() => {
     startPolling();
+    // No point measuring things nobody can see: pause while hidden / minimized, resume right away
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (fastId.current) clearInterval(fastId.current);
+        if (slowId.current) clearInterval(slowId.current);
+      } else {
+        startPolling();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     if (settings.alwaysOnTop) {
       import('@tauri-apps/api/window').then(async ({ Window }) => { try { const w = await Window.getCurrent(); await w.setAlwaysOnTop(true); } catch {} });
     }
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       if (fastId.current) clearInterval(fastId.current);
       if (slowId.current) clearInterval(slowId.current);
-      if (autoModeDetectionId.current) clearInterval(autoModeDetectionId.current);
     };
   }, [settings.perfMode]);
 

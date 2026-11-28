@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, BarChart2, Zap, Minus, Maximize2, X, Crown, Image, Clock } from 'lucide-react';
+import { Settings, BarChart2, Zap, Minus, Maximize2, X, Image, Clock } from 'lucide-react';
 import { useSystemData, PERF_CONFIG, TRANSLATIONS, type PerfMode, type Language, type I18n } from '@/store/system';
 import { Modal } from '@/components/ui/Modal';
 import { MetricCard } from '@/components/MetricCard';
 import { ChartModal } from '@/components/ChartModal';
+import { ProcIcon } from '@/components/ProcIcon';
 import { SpotifyPanel } from '@/components/SpotifyPanel';
 import { fmtSpeed, fmtTemp, fmtUptime, cn } from '@/lib/utils';
 import { ICARDI_IMG, ICARDI_IMG2 } from '@/assets/icardi';
 import { MADISON_IMG, MADISON_IMG2 } from '@/assets/madison';
 
-type ModalType = 'chart' | 'spotify' | 'settings' | 'actions' | 'changelog' | 'notes' | 'timer' | 'premium' | 'worldclock' | 'imagetools' | null;
+type ModalType = 'chart' | 'spotify' | 'settings' | 'actions' | 'changelog' | 'notes' | 'timer' | 'worldclock' | 'imagetools' | null;
 type ChartKey = 'cpu' | 'ram' | 'gpu' | 'net' | 'disk';
 type ArtistTheme = 'madison' | 'icardi' | null;
 
@@ -293,7 +294,7 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
   }
 
   // Shared styles
-  const panelBg: React.CSSProperties  = tc ? { background:'rgba(255,255,255,0.05)', borderRadius:2, padding:10 } : { background:'rgba(0,0,0,0.03)', borderRadius:2, padding:10 };
+  const panelBg: React.CSSProperties  = tc ? { background:'rgba(255,255,255,0.05)', borderRadius:12, padding:10 } : { background:'rgba(0,0,0,0.03)', borderRadius:12, padding:10 };
   const inputCls = cn('w-full px-2.5 py-1.5 rounded-lg border text-[11px] focus:outline-none',
     tc ? 'bg-white/5 border-white/10 text-white placeholder-white/30' : 'bg-white dark:bg-[#1c1c1e] border-black/[0.08] dark:border-white/[0.1] text-[#1a1a1a] dark:text-[#e8e8ea]');
   const btnPrimary = cn('py-2 rounded-xl text-[11px] font-bold transition-all');
@@ -332,7 +333,7 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
         </label>
         {img && <>
           <div className="rounded-xl overflow-hidden flex items-center justify-center mb-3" style={{...panelBg, minHeight:130, maxHeight:200, padding:0}}>
-            <img src={img} alt="preview" style={{maxHeight:195,maxWidth:'100%',filter:getFilter(),borderRadius:2,transition:'filter 0.25s'}}/>
+            <img src={img} alt="preview" style={{maxHeight:195,maxWidth:'100%',filter:getFilter(),borderRadius:10,transition:'filter 0.25s'}}/>
           </div>
           <div className="grid grid-cols-3 gap-1.5 mb-2">
             {editOps.map(o=>(
@@ -433,34 +434,6 @@ function ImageToolsModal({ open, onClose, tc }: { open:boolean; onClose:()=>void
   );
 }
 
-
-// ── Premium Modal ─────────────────────────────────────────────────────────────
-function PremiumModal({ open, onClose, t, tc }: { open:boolean; onClose:()=>void; t:I18n; tc:ThemeConfig|null }) {
-  return (
-    <Modal open={open} onClose={onClose} title={t.premiumTitle} tc={tc}>
-      <div className="flex flex-col items-center gap-4 py-2">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">👑</div>
-        <div className="text-center">
-          <div className="text-[16px] font-extrabold mb-1" style={{color:tc?tc.textPrimary:undefined}}><span className={!tc?'text-[#1a1a1a] dark:text-[#e8e8ea]':''}>F.R.I.D.A.Y. Premium</span></div>
-          <div className="text-[12px]" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/40 dark:text-white/40 max-w-[260px]':''}>Unlock advanced features: custom themes, cloud sync and more.</span></div>
-        </div>
-        <div className="w-full rounded-2xl border p-4" style={tc?{background:'rgba(251,191,36,0.08)',borderColor:'rgba(251,191,36,0.25)'}:{background:'rgb(255,251,235)',borderColor:'rgb(253,230,138)'}}>
-          <div className="text-[11px] font-bold mb-2 text-amber-600 dark:text-amber-400">Want Premium access?</div>
-          <div className="text-[11px] text-amber-600 dark:text-amber-500">
-            Contact on Discord:<br/>
-            <span className="font-bold text-[15px] font-mono select-all text-amber-700 dark:text-amber-300">.raldexx</span>
-          </div>
-        </div>
-        <div className="text-[10px] text-center" style={{color:tc?tc.textMuted:undefined}}><span className={!tc?'text-black/20 dark:text-white/20':''}>Premium is manually granted.<br/>Reach out with your username to get access.</span></div>
-      </div>
-      <button onClick={onClose} style={tc?{background:'rgba(255,255,255,0.07)',color:tc.textMuted}:undefined}
-        className={cn('mt-2 w-full py-2.5 rounded-xl text-[12px] font-semibold transition-colors',
-          !tc && 'bg-black/[0.04] dark:bg-white/[0.06] text-black/40 dark:text-white/40 hover:bg-black/[0.07]')}>
-        {t.close}
-      </button>
-    </Modal>
-  );
-}
 
 // ── Tour Modal ────────────────────────────────────────────────────────────────
 function TourModal({ open, onClose, t, tc }: { open:boolean; onClose:()=>void; t:I18n; tc:ThemeConfig|null }) {
@@ -860,7 +833,7 @@ export default function App() {
                 {icon:<X size={9} strokeWidth={3}/>,         title:'Close',    color:'#ff5f57', action:()=>getWin().then(w=>w.close())},
               ].map((btn,i)=>(
                 <button key={i} onClick={btn.action} title={btn.title}
-                  className="w-5 h-5 rounded-sm flex items-center justify-center text-black/60 hover:brightness-110 active:brightness-90 transition-[filter]"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-black/60 hover:brightness-110 active:brightness-90 transition-[filter]"
                   style={{background:btn.color}}>{btn.icon}</button>
               ))}
             </div>
@@ -913,6 +886,7 @@ export default function App() {
                 ? <div className="text-[10px] py-2" style={muted()}><span className={!tc?'text-black/20 dark:text-white/20':''}>No data</span></div>
                 : procs.slice(0,5).map(p=>(
                   <div key={p.pid} className="flex items-center gap-2 border-b pb-1.5 last:border-0 last:pb-0" style={tc?{borderColor:'rgba(255,255,255,0.05)'}:{borderColor:'rgba(0,0,0,0.04)'}}>
+                    <ProcIcon exe={p.exe} name={p.name.replace(/\.exe$/i,'')} />
                     <div className="flex-1 min-w-0">
                       <div className="text-[10px] font-semibold truncate" style={tc?{color:tc.textPrimary}:{}}><span className={!tc?'text-[#333] dark:text-[#ccc]':''}>{p.name.replace(/\.exe$/i,'')}</span></div>
                       <div className="h-[2px] rounded-full mt-0.5 overflow-hidden" style={{background:tc?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.05)'}}>
@@ -969,19 +943,17 @@ export default function App() {
         </div>
 
         {/* ═══ BOTTOM BUTTONS ═══ */}
-        <div className="grid grid-cols-4 gap-2 no-drag">
+        <div className="grid grid-cols-3 gap-2 no-drag">
           {[
             {icon:<Settings size={14}/>,  label:t.settings,  action:()=>setModal('settings')},
             {icon:<BarChart2 size={14}/>, label:t.changelog, action:()=>setModal('changelog')},
             {icon:<Image size={14}/>,     label:t.imageTools, action:()=>setModal('imagetools')},
-            {icon:<Crown size={14}/>,     label:t.premium,    action:()=>setModal('premium'), gold:true},
-          ].map(({icon,label,action,gold})=>(
+          ].map(({icon,label,action})=>(
             <button key={label} onClick={action}
-              style={!gold&&tc?{background:tc.cardBg,borderColor:tc.cardBorder,color:tc.textMuted}:undefined}
+              style={tc?{background:tc.cardBg,borderColor:tc.cardBorder,color:tc.textMuted}:undefined}
               className={cn(btnBase,
-                gold ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-amber-300 hover:opacity-90'
-                     : !tc ? 'bg-white dark:bg-[#1c1c1e] text-black/40 dark:text-white/40 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
-                           : 'hover:opacity-80')}>
+                !tc ? 'bg-white dark:bg-[#1c1c1e] text-black/40 dark:text-white/40 border-black/[0.07] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
+                    : 'hover:opacity-80')}>
               {icon}{label}
             </button>
           ))}
@@ -1185,7 +1157,6 @@ export default function App() {
         </Modal>
         <WorldClockModal open={modal==='worldclock'} onClose={()=>setModal(null)} t={t} tc={tc} />
         <ImageToolsModal open={modal==='imagetools'} onClose={()=>setModal(null)} tc={tc} />
-        <PremiumModal open={modal==='premium'} onClose={()=>setModal(null)} t={t} tc={tc} />
         <TourModal open={showTour} onClose={closeTour} t={t} tc={tc} />
         <TimerModal open={modal==='timer'} onClose={()=>setModal(null)} t={t} tc={tc} />
 

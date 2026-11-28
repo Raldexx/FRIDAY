@@ -83,7 +83,7 @@ No client secret is used (PKCE). Tokens are stored in the app data folder. Witho
 - Open system task manager / activity monitor
 
 ### 🪟 Window
-- Custom frameless window with square corners (normal Windows window look)
+- Custom frameless window with square corners; cards and buttons keep a modern rounded look
 - Colored minimize, maximize, close controls
 - Freely resizable
 
@@ -288,13 +288,6 @@ FRIDAY/
 
 ---
 
-## 👑 Premium
-
-Want Premium features (cloud sync, themes)?
-Contact on Discord: **Raldexx**
-
----
-
 ## 📋 Changelog
 
 ### v4.2.0 — Bug-fix release
@@ -305,7 +298,12 @@ Contact on Discord: **Raldexx**
 - 🎵 Fixed wrong artist in music history and the fake 35% progress bar
 - 🎧 Optional Spotify Web API login (album art, real progress/time) and album art in recently played
 - ⚙️ Top processes without `.exe`, full-width card; colored window buttons
-- 🔲 Square-corner look across the whole app (radius is set in `tailwind.config.js`)
+- 🔲 Square-cornered app window (also on Windows 11, where the system would round it); cards and buttons keep their rounded look
+- 🔔 System tray fixed (one icon, proper name/tooltip, left click shows/hides)
+- 🌐 Network speed is now measured per second (it was calculated wrongly)
+- 🧩 App icons in Top Processes
+- ⚡ Performance: no UI freezes from polling, cached disk/sensor reads, shared process scan, polling pauses while hidden/minimized
+- 👑 Premium section removed
 - 🔢 Version numbers in sync (package, Cargo, Tauri, UI)
 - 🗑 Removed: F.R.I.D.A.Y. AI voice assistant (and `run_command` / `kill_process` / `open_url`), Spotify stats window, lyrics card, `image_upscaler.py` launcher
 - 🔄 AI Translator card hidden from the UI (code kept)

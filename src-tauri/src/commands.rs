@@ -1,25 +1,68 @@
 use serde::Serialize;
-use sysinfo::{Components, Disks, Networks, System, ProcessesToUpdate};
+use sysinfo::{Components, Disks, Networks, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
+use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
-// ── Persistent System instance ────────────────────────────────────────────────
+// ── Persistent sysinfo state ──────────────────────────────────────────────────
+// Everything lives in one place and is kept between polls. Rebuilding Disks /
+// Components / Networks on every call was slow, and CPU / network numbers need the
+// previous sample to be meaningful anyway.
+
+#[derive(Clone, Copy)]
+struct SlowStats {
+    disk_percent: f64,
+    disk_free_gb: f64,
+    cpu_temp:     Option<f32>,
+    gpu_temp:     Option<f32>,
+}
+
 struct SysState {
-    sys: System,
+    sys:        System,
+    networks:   Networks,
+    disks:      Disks,
+    components: Components,
+    /// Disk usage and temperatures change slowly and are costly to read: refreshed every 5 s
+    slow_cache: Option<(Instant, SlowStats)>,
+    last_proc_refresh: Option<Instant>,
+    last_net:   Instant,
 }
 
 static SYS: Mutex<Option<SysState>> = Mutex::new(None);
 
 fn with_sys<F, R>(f: F) -> R
 where
-    F: FnOnce(&mut System) -> R,
+    F: FnOnce(&mut SysState) -> R,
 {
-    let mut guard = SYS.lock().unwrap();
+    let mut guard = SYS.lock().unwrap_or_else(|e| e.into_inner());
     if guard.is_none() {
-        let mut sys = System::new_all();
-        sys.refresh_all();
-        *guard = Some(SysState { sys });
+        let mut sys = System::new();
+        sys.refresh_cpu_usage(); // first sample = baseline for the next one
+        sys.refresh_memory();
+        *guard = Some(SysState {
+            sys,
+            networks:   Networks::new_with_refreshed_list(),
+            disks:      Disks::new_with_refreshed_list(),
+            components: Components::new_with_refreshed_list(),
+            slow_cache: None,
+            last_proc_refresh: None,
+            last_net:   Instant::now(),
+        });
     }
-    f(&mut guard.as_mut().unwrap().sys)
+    f(guard.as_mut().unwrap())
+}
+
+/// Process list refresh, shared by the top-processes list and Auto Mode.
+/// At most once per ~second, so both together cost one scan instead of two.
+fn refresh_processes_throttled(st: &mut SysState) {
+    if st.last_proc_refresh.map_or(true, |t| t.elapsed() > Duration::from_millis(900)) {
+        st.sys.refresh_processes_specifics(
+            ProcessesToUpdate::All,
+            true,
+            ProcessRefreshKind::nothing().with_cpu().with_memory().with_exe(UpdateKind::OnlyIfNotSet),
+        );
+        st.last_proc_refresh = Some(Instant::now());
+    }
 }
 
 // ── Response Types ────────────────────────────────────────────────────────────
@@ -46,7 +89,9 @@ pub struct BatteryInfo {
 
 #[derive(Serialize)]
 pub struct NetworkStats {
+    /// bytes per second since the previous call
     pub download_bytes: u64,
+    /// bytes per second since the previous call
     pub upload_bytes:   u64,
     pub total_recv_mb:  f64,
     pub total_sent_mb:  f64,
@@ -58,6 +103,7 @@ pub struct ProcessInfo {
     pub cpu_percent: f32,
     pub mem_percent: f32,
     pub pid:         u32,
+    pub exe:         Option<String>,
 }
 
 #[derive(Serialize)]
@@ -69,63 +115,73 @@ pub struct SpotifyInfo {
 
 // ── Commands ──────────────────────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_system_stats() -> SystemStats {
-    with_sys(|sys| { sys.refresh_cpu_usage(); sys.refresh_memory(); });
-    std::thread::sleep(std::time::Duration::from_millis(200));
-    with_sys(|sys| {
-        sys.refresh_cpu_usage();
-        sys.refresh_memory();
+    with_sys(|st| {
+        st.sys.refresh_cpu_usage();
+        st.sys.refresh_memory();
 
-        let cpu_percent  = sys.global_cpu_usage();
-        let ram_used     = sys.used_memory();
-        let ram_total    = sys.total_memory();
+        let cpu_percent  = st.sys.global_cpu_usage();
+        let ram_used     = st.sys.used_memory();
+        let ram_total    = st.sys.total_memory();
         let ram_percent  = if ram_total > 0 { ram_used as f32 / ram_total as f32 * 100.0 } else { 0.0 };
         let ram_used_gb  = ram_used  as f64 / 1_073_741_824.0;
         let ram_total_gb = ram_total as f64 / 1_073_741_824.0;
 
-        let disks = Disks::new_with_refreshed_list();
-        let (disk_percent, disk_free_gb) = disks.iter().next().map(|d| {
-            let total = d.total_space() as f64;
-            let free  = d.available_space() as f64;
-            (if total > 0.0 { (total - free) / total * 100.0 } else { 0.0 }, free / 1_073_741_824.0)
-        }).unwrap_or((0.0, 0.0));
+        if st.slow_cache.map_or(true, |(t, _)| t.elapsed() > Duration::from_secs(5)) {
+            st.disks.refresh(true);
+            st.components.refresh(true);
 
-        let uptime_secs = System::uptime();
+            let (disk_percent, disk_free_gb) = st.disks.iter().next().map(|d| {
+                let total = d.total_space() as f64;
+                let free  = d.available_space() as f64;
+                (if total > 0.0 { (total - free) / total * 100.0 } else { 0.0 }, free / 1_073_741_824.0)
+            }).unwrap_or((0.0, 0.0));
 
-        let components = Components::new_with_refreshed_list();
-        let cpu_temp: Option<f32> = components.iter()
-            .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") || l.contains("tdie") })
-            .and_then(|c| c.temperature());
-        let gpu_temp: Option<f32> = components.iter()
-            .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
-            .and_then(|c| c.temperature());
+            let cpu_temp: Option<f32> = st.components.iter()
+                .find(|c| { let l = c.label().to_lowercase(); l.contains("cpu") || l.contains("core") || l.contains("package") || l.contains("tdie") })
+                .and_then(|c| c.temperature());
+            let gpu_temp: Option<f32> = st.components.iter()
+                .find(|c| { let l = c.label().to_lowercase(); l.contains("gpu") || l.contains("nvidia") || l.contains("amd") || l.contains("radeon") })
+                .and_then(|c| c.temperature());
+
+            st.slow_cache = Some((Instant::now(), SlowStats { disk_percent, disk_free_gb, cpu_temp, gpu_temp }));
+        }
+        let slow = st.slow_cache.map(|(_, v)| v).unwrap_or(SlowStats { disk_percent: 0.0, disk_free_gb: 0.0, cpu_temp: None, gpu_temp: None });
 
         SystemStats {
             cpu_percent, ram_percent, ram_used_gb, ram_total_gb,
-            disk_percent, disk_free_gb, uptime_secs,
-            cpu_temp, gpu_temp, battery: None,
+            disk_percent: slow.disk_percent, disk_free_gb: slow.disk_free_gb,
+            uptime_secs: System::uptime(),
+            cpu_temp: slow.cpu_temp, gpu_temp: slow.gpu_temp, battery: None,
         }
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_network_stats() -> NetworkStats {
-    let mut networks = Networks::new_with_refreshed_list();
-    std::thread::sleep(std::time::Duration::from_millis(200));
-    networks.refresh(false);
+    with_sys(|st| {
+        st.networks.refresh(true);
+        let secs = st.last_net.elapsed().as_secs_f64().max(0.1);
+        st.last_net = Instant::now();
 
-    let (mut dl, mut ul, mut tr, mut ts) = (0u64, 0u64, 0u64, 0u64);
-    for (_, d) in &networks { dl += d.received(); ul += d.transmitted(); tr += d.total_received(); ts += d.total_transmitted(); }
-    NetworkStats { download_bytes: dl, upload_bytes: ul, total_recv_mb: tr as f64 / 1_048_576.0, total_sent_mb: ts as f64 / 1_048_576.0 }
+        let (mut dl, mut ul, mut tr, mut ts) = (0u64, 0u64, 0u64, 0u64);
+        for (_, d) in &st.networks { dl += d.received(); ul += d.transmitted(); tr += d.total_received(); ts += d.total_transmitted(); }
+        NetworkStats {
+            download_bytes: (dl as f64 / secs) as u64,
+            upload_bytes:   (ul as f64 / secs) as u64,
+            total_recv_mb:  tr as f64 / 1_048_576.0,
+            total_sent_mb:  ts as f64 / 1_048_576.0,
+        }
+    })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_processes() -> Vec<ProcessInfo> {
-    with_sys(|sys| {
-        sys.refresh_processes(ProcessesToUpdate::All, true);
-        let ram_total = sys.total_memory() as f32;
-        let mut procs: Vec<ProcessInfo> = sys.processes().values()
+    with_sys(|st| {
+        refresh_processes_throttled(st);
+        let ram_total = st.sys.total_memory() as f32;
+        let mut procs: Vec<ProcessInfo> = st.sys.processes().values()
             .filter(|p| {
                 let name = p.name().to_string_lossy();
                 #[cfg(target_os = "windows")]
@@ -159,6 +215,7 @@ pub fn get_processes() -> Vec<ProcessInfo> {
                 cpu_percent: p.cpu_usage(),
                 mem_percent: if ram_total > 0.0 { p.memory() as f32 / ram_total * 100.0 } else { 0.0 },
                 pid:         p.pid().as_u32(),
+                exe:         p.exe().map(|e| e.to_string_lossy().to_string()),
             })
             .collect();
         procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap_or(std::cmp::Ordering::Equal));
@@ -167,9 +224,56 @@ pub fn get_processes() -> Vec<ProcessInfo> {
     })
 }
 
+// ── Process icons ─────────────────────────────────────────────────────────────
+
+static ICON_CACHE: Mutex<Option<HashMap<String, Option<String>>>> = Mutex::new(None);
+
+/// PNG data-URL of an app's icon (Windows only, `None` elsewhere or on failure).
+/// Cached per exe path, so each icon is extracted only once.
+#[tauri::command]
+pub async fn get_process_icon(exe: String) -> Option<String> {
+    let cached = ICON_CACHE.lock().unwrap_or_else(|e| e.into_inner()).as_ref().and_then(|m| m.get(&exe).cloned());
+    if let Some(hit) = cached { return hit; }
+
+    let key = exe.clone();
+    let icon = tauri::async_runtime::spawn_blocking(move || extract_icon(&exe)).await.ok().flatten();
+    ICON_CACHE.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_with(HashMap::new).insert(key, icon.clone());
+    icon
+}
+
+#[cfg(target_os = "windows")]
+fn extract_icon(exe: &str) -> Option<String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let path = std::path::Path::new(exe);
+    if !path.is_file() || !path.extension().map_or(false, |e| e.eq_ignore_ascii_case("exe")) { return None; }
+
+    // The path goes in through an environment variable, never into the script text,
+    // so odd characters in a file name can not break (or inject into) the script.
+    let script = "Add-Type -AssemblyName System.Drawing; \
+        $i=[System.Drawing.Icon]::ExtractAssociatedIcon($env:FRIDAY_ICON_PATH); \
+        if($i){$m=New-Object IO.MemoryStream; $i.ToBitmap().Save($m,[System.Drawing.Imaging.ImageFormat]::Png); [Convert]::ToBase64String($m.ToArray())}";
+    let out = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .env("FRIDAY_ICON_PATH", exe)
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .ok()?;
+    let b64 = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    let looks_ok = out.status.success()
+        && !b64.is_empty()
+        && b64.len() < 200_000
+        && b64.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'+' || c == b'/' || c == b'=');
+    if looks_ok { Some(format!("data:image/png;base64,{b64}")) } else { None }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn extract_icon(_exe: &str) -> Option<String> { None }
+
 // ── Spotify / Now Playing ─────────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_spotify() -> SpotifyInfo {
     #[cfg(target_os = "windows")]
     if let Some(title) = find_spotify_title_windows() {
@@ -201,13 +305,13 @@ pub async fn spotify_login(app: tauri::AppHandle, client_id: String) -> Result<(
     crate::spotify_api::login(&spotify_dir(&app)?, &client_id).await
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn spotify_logout(app: tauri::AppHandle) -> Result<(), String> {
     crate::spotify_api::logout(&spotify_dir(&app)?);
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn spotify_status(app: tauri::AppHandle) -> Result<crate::spotify_api::Status, String> {
     Ok(crate::spotify_api::status(&spotify_dir(&app)?))
 }
@@ -340,7 +444,7 @@ pub struct SystemInfo {
     pub ram_total_gb: f64,
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_system_info() -> SystemInfo {
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -359,7 +463,7 @@ pub fn get_system_info() -> SystemInfo {
 
 // ── System Actions ────────────────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn system_action(action: String) -> Result<(), String> {
     match action.as_str() {
         "restart" => {
@@ -407,7 +511,7 @@ pub fn system_action(action: String) -> Result<(), String> {
 
 // ── Folder Picker ─────────────────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn open_folder_picker() -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
@@ -457,7 +561,7 @@ pub fn open_folder_picker() -> Result<String, String> {
 
 // ── File Sorter ───────────────────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn sort_files(folder: String, output: String, mode: String) -> Result<String, String> {
     use std::fs;
     use std::collections::HashMap;
@@ -529,7 +633,7 @@ pub fn sort_files(folder: String, output: String, mode: String) -> Result<String
 
 // ── Active Window Detection ───────────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_active_window() -> Option<String> {
     #[cfg(target_os = "windows")]
     {
@@ -609,11 +713,11 @@ fn get_active_window_linux() -> Option<String> {
 
 // ── Auto Performance Mode Detection ────────────────────────────────────────────
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn get_running_apps() -> Vec<String> {
-    with_sys(|sys| {
-        sys.refresh_processes(ProcessesToUpdate::All, true);
-        sys.processes()
+    with_sys(|st| {
+        refresh_processes_throttled(st);
+        st.sys.processes()
             .values()
             .map(|p| p.name().to_string_lossy().to_string())
             .collect()
@@ -652,7 +756,7 @@ fn classify_performance_mode(active_window: &str, running_apps: &[String]) -> &'
     if heavy_running { "eco" } else { "normal" }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn detect_auto_performance_mode() -> String {
     classify_performance_mode(&get_active_window().unwrap_or_default(), &get_running_apps()).to_string()
 }

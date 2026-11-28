@@ -11,9 +11,9 @@ export default {
       colors: {
         spotify: '#1DB954',
       },
-      // Square-corner look: one place to tune it (2px = crisp but not harsh, 0 = fully square)
       borderRadius: {
-        DEFAULT: '2px', sm: '2px', md: '2px', lg: '2px', xl: '2px', '2xl': '2px', '3xl': '2px',
+        '2xl': '1rem',
+        '3xl': '1.25rem',
       },
       keyframes: {
         slideIn: {
